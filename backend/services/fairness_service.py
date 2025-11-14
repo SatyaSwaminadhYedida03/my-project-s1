@@ -1,10 +1,9 @@
 """
 Fairness and Bias Detection Service
-Uses IBM AIF360 toolkit for fairness metrics
+Simplified version for Vercel deployment (ML libraries removed for size constraints)
 """
 
-import numpy as np
-import pandas as pd
+# ML libraries not available in Vercel (size constraints)
 from collections import defaultdict
 
 try:

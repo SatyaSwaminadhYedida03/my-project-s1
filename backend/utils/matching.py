@@ -1,14 +1,12 @@
 import re
-import numpy as np
 
-# Lazy imports for heavy libraries
+# ML libraries not available in Vercel (size constraints)
+# Simplified matching without scikit-learn
 def _get_tfidf_vectorizer():
-    from sklearn.feature_extraction.text import TfidfVectorizer
-    return TfidfVectorizer
+    return None
 
 def _get_cosine_similarity():
-    from sklearn.metrics.pairwise import cosine_similarity
-    return cosine_similarity
+    return None
 
 # Master skills list (can be extended)
 SKILLS_MASTER = [

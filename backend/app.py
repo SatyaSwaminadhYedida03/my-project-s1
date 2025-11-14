@@ -12,7 +12,8 @@ from flask_cors import CORS
 from flask_jwt_extended import JWTManager
 from config.config import config
 from backend.models.database import Database
-from backend.routes import auth_routes, job_routes, candidate_routes, assessment_routes, dashboard_routes
+from backend.routes import auth_routes, job_routes, candidate_routes
+# Disabled for Vercel: assessment_routes, dashboard_routes (require ML libraries)
 
 # Initialize Flask app with frontend folder
 frontend_folder = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', 'frontend'))
@@ -34,8 +35,9 @@ db.connect(env)
 app.register_blueprint(auth_routes.bp, url_prefix='/api/auth')
 app.register_blueprint(job_routes.bp, url_prefix='/api/jobs')
 app.register_blueprint(candidate_routes.bp, url_prefix='/api/candidates')
-app.register_blueprint(assessment_routes.bp, url_prefix='/api/assessments')
-app.register_blueprint(dashboard_routes.bp, url_prefix='/api/dashboard')
+# Disabled for Vercel (require ML libraries):
+# app.register_blueprint(assessment_routes.bp, url_prefix='/api/assessments')
+# app.register_blueprint(dashboard_routes.bp, url_prefix='/api/dashboard')
 
 # Root endpoint - serve frontend
 @app.route('/')
