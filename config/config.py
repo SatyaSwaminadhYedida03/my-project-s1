@@ -5,8 +5,16 @@ load_dotenv()
 
 class Config:
     """Base configuration"""
-    SECRET_KEY = os.getenv('SECRET_KEY', 'dev-secret-key')
-    JWT_SECRET_KEY = os.getenv('JWT_SECRET_KEY', 'jwt-secret-key')
+    # SECURITY: Generate strong secrets using: python -c "import secrets; print(secrets.token_hex(32))"
+    SECRET_KEY = os.getenv('SECRET_KEY')
+    JWT_SECRET_KEY = os.getenv('JWT_SECRET_KEY')
+    
+    # Validate secrets are set
+    if not SECRET_KEY or len(SECRET_KEY) < 32:
+        raise ValueError('SECRET_KEY must be set and at least 32 characters long')
+    if not JWT_SECRET_KEY or len(JWT_SECRET_KEY) < 32:
+        raise ValueError('JWT_SECRET_KEY must be set and at least 32 characters long')
+    
     JWT_ACCESS_TOKEN_EXPIRES = int(os.getenv('JWT_ACCESS_TOKEN_EXPIRES', 3600))
     
     # Database

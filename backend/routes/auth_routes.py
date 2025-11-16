@@ -1,4 +1,4 @@
-from flask import Blueprint, request, jsonify
+from flask import Blueprint, request, jsonify, current_app
 from flask_jwt_extended import create_access_token, jwt_required, get_jwt_identity
 from flask_bcrypt import Bcrypt
 from datetime import datetime, timedelta
@@ -6,9 +6,12 @@ from bson import ObjectId
 import re
 import secrets
 import hashlib
+import os
 
 from backend.models.database import get_db
 from backend.models.user import User, Candidate
+from backend.utils.sanitizer import sanitizer
+from backend.utils.rate_limiter import rate_limit
 
 bp = Blueprint('auth', __name__)
 bcrypt = Bcrypt()
@@ -19,6 +22,7 @@ def validate_email(email):
     return re.match(pattern, email) is not None
 
 @bp.route('/register', methods=['POST'])
+@rate_limit(max_requests=10, window_seconds=3600)  # 10 registrations per hour
 def register():
     """Register a new user (candidate or recruiter)"""
     try:
@@ -30,7 +34,11 @@ def register():
             if field not in data:
                 return jsonify({'error': f'Missing required field: {field}'}), 400
         
-        email = data['email'].lower().strip()
+        # Validate and sanitize email
+        email = sanitizer.sanitize_email(data.get('email', ''))
+        if not email:
+            return jsonify({'error': 'Invalid email format'}), 400
+        
         password = data['password']
         full_name = data['full_name'].strip()
         role = data['role'].lower()
@@ -43,9 +51,18 @@ def register():
         if role not in ['candidate', 'recruiter', 'admin']:
             return jsonify({'error': 'Invalid role. Must be candidate, recruiter, or admin'}), 400
         
-        # Validate password strength
-        if len(password) < 6:
-            return jsonify({'error': 'Password must be at least 6 characters'}), 400
+        # Validate password strength (minimum 8 chars, complexity requirements)
+        if len(password) < 8:
+            return jsonify({'error': 'Password must be at least 8 characters'}), 400
+        
+        # Check password complexity
+        has_upper = any(c.isupper() for c in password)
+        has_lower = any(c.islower() for c in password)
+        has_digit = any(c.isdigit() for c in password)
+        has_special = any(c in '!@#$%^&*()_+-=[]{}|;:,.<>?' for c in password)
+        
+        if not (has_upper and has_lower and has_digit):
+            return jsonify({'error': 'Password must contain uppercase, lowercase, and numbers'}), 400
         
         db = get_db()
         users_collection = db['users']
@@ -96,6 +113,7 @@ def register():
         return jsonify({'error': str(e)}), 500
 
 @bp.route('/login', methods=['POST'])
+@rate_limit(max_requests=5, window_seconds=300)  # 5 attempts per 5 minutes
 def login():
     """Login user"""
     try:
@@ -104,7 +122,11 @@ def login():
         if 'email' not in data or 'password' not in data:
             return jsonify({'error': 'Email and password required'}), 400
         
-        email = data['email'].lower().strip()
+        # Sanitize inputs
+        email = sanitizer.sanitize_email(data['email'])
+        if not email:
+            return jsonify({'error': 'Invalid email format'}), 400
+        
         password = data['password']
         
         db = get_db()
@@ -183,6 +205,7 @@ def get_profile():
         return jsonify({'error': str(e)}), 500
 
 @bp.route('/forgot-password', methods=['POST'])
+@rate_limit(max_requests=3, window_seconds=3600)  # 3 requests per hour
 def forgot_password():
     """Request password reset - generates reset token"""
     try:
@@ -227,14 +250,16 @@ def forgot_password():
         )
         
         # TODO: Send email with reset link
-        # For now, return the token for testing purposes
-        reset_link = f"http://localhost:5000/reset-password?token={reset_token}&email={email}"
+        # SECURITY: Never expose tokens in production
+        base_url = os.getenv('FRONTEND_URL', 'http://localhost:5000')
+        reset_link = f"{base_url}/reset-password.html?token={reset_token}&email={email}"
+        
+        # In development, log the token (remove in production)
+        if current_app.config.get('DEBUG', False):
+            print(f"[DEV ONLY] Password reset token for {email}: {reset_token}")
         
         return jsonify({
-            'message': 'Password reset instructions sent',
-            'reset_token': reset_token,  # Remove this in production
-            'reset_link': reset_link,     # Remove this in production
-            'note': 'Email functionality not configured. Use the reset_token for testing'
+            'message': 'If an account exists with this email, password reset instructions have been sent'
         }), 200
         
     except Exception as e:
@@ -260,9 +285,17 @@ def reset_password():
         if not validate_email(email):
             return jsonify({'error': 'Invalid email format'}), 400
         
-        # Validate new password strength
-        if len(new_password) < 6:
-            return jsonify({'error': 'Password must be at least 6 characters'}), 400
+        # Validate new password strength (minimum 8 chars, complexity requirements)
+        if len(new_password) < 8:
+            return jsonify({'error': 'Password must be at least 8 characters'}), 400
+        
+        # Check password complexity
+        has_upper = any(c.isupper() for c in new_password)
+        has_lower = any(c.islower() for c in new_password)
+        has_digit = any(c.isdigit() for c in new_password)
+        
+        if not (has_upper and has_lower and has_digit):
+            return jsonify({'error': 'Password must contain uppercase, lowercase, and numbers'}), 400
         
         db = get_db()
         users_collection = db['users']
@@ -324,9 +357,17 @@ def change_password():
         current_password = data['current_password']
         new_password = data['new_password']
         
-        # Validate new password strength
-        if len(new_password) < 6:
-            return jsonify({'error': 'New password must be at least 6 characters'}), 400
+        # Validate new password strength (minimum 8 chars, complexity requirements)
+        if len(new_password) < 8:
+            return jsonify({'error': 'New password must be at least 8 characters'}), 400
+        
+        # Check password complexity
+        has_upper = any(c.isupper() for c in new_password)
+        has_lower = any(c.islower() for c in new_password)
+        has_digit = any(c.isdigit() for c in new_password)
+        
+        if not (has_upper and has_lower and has_digit):
+            return jsonify({'error': 'Password must contain uppercase, lowercase, and numbers'}), 400
         
         if current_password == new_password:
             return jsonify({'error': 'New password must be different from current password'}), 400
