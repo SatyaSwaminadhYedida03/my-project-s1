@@ -33,13 +33,21 @@ env/
 .env
 .env.local
 .env.production
+.env.*.local
 *.env
 
 # Secrets & Keys - NEVER COMMIT
 *.pem
 *.key
+*.crt
 *.cert
 secrets/
+deploy_key*
+id_rsa*
+id_ed25519*
+
+# License files (generated deployment licenses)
+license_*.txt
 
 # IDEs
 .vscode/

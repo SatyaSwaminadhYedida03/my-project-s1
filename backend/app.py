@@ -1,6 +1,7 @@
 """
 Smart Hiring System - Main Application Entry Point
 Initializes Flask app with all routes and configurations
+© 2025 Smart Hiring System - Proprietary Software - All Rights Reserved
 """
 
 import sys
@@ -13,7 +14,16 @@ from flask_jwt_extended import JWTManager
 from config.config import config
 from backend.models.database import Database
 from backend.routes import auth_routes, job_routes, candidate_routes
+from backend.utils.license_validator import check_deployment_authorization, require_valid_license
 # Disabled for Vercel: assessment_routes, dashboard_routes (require ML libraries)
+
+# DEPLOYMENT AUTHORIZATION CHECK
+# This prevents unauthorized deployments of the application
+if not check_deployment_authorization():
+    print("\n🚨 CRITICAL: Unauthorized deployment detected")
+    print("This software is proprietary and requires a valid license.")
+    print("Contact: admin@smarthiring.com")
+    sys.exit(1)
 
 # Initialize Flask app with frontend folder
 frontend_folder = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', 'frontend'))

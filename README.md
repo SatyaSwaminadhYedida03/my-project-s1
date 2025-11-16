@@ -1,33 +1,31 @@
 # 🎯 Smart Hiring System
 
-**AI-Powered Fair Recruitment Platform** - Deployed & Production-Ready
+**AI-Powered Fair Recruitment Platform** - Proprietary Software
 
-[![Live Demo](https://img.shields.io/badge/Live-Demo-success)](https://smart-hiring-k1pb.onrender.com)
 [![Python](https://img.shields.io/badge/Python-3.11-blue.svg)](https://www.python.org/)
 [![Flask](https://img.shields.io/badge/Flask-3.0-green.svg)](https://flask.palletsprojects.com/)
 [![MongoDB Atlas](https://img.shields.io/badge/Database-MongoDB%20Atlas-green.svg)](https://www.mongodb.com/)
+[![License](https://img.shields.io/badge/License-Proprietary-red.svg)](LICENSE)
 
 ---
 
-## 🚀 Live Demo
+## 🔒 **PROPRIETARY SOFTWARE - PRIVATE REPOSITORY**
 
-**Access the application:** [https://smart-hiring-k1pb.onrender.com](https://smart-hiring-k1pb.onrender.com)
+**⚠️ IMPORTANT NOTICE:**
+- This software is **PROPRIETARY and CONFIDENTIAL**
+- All rights reserved © 2025 Smart Hiring System
+- **NO UNAUTHORIZED USE, COPYING, OR DISTRIBUTION**
+- Access restricted to authorized developers only
+- Requires explicit written permission for any use
+- See [LICENSE](LICENSE) file for complete terms
 
-**Test Credentials:**
-- **Admin:** admin@smarthiring.com / changeme
-- **Company/Recruiter:** Register new account with "Company" role
-- **Candidate:** Register new account with "Candidate" role
-
-> ⚠️ **Note:** First request after 15min idle takes ~30 seconds (free tier cold start)
+**For authorization requests, contact:** admin@smarthiring.com
 
 ---
 
-## ✨ Features
+## 🚀 Development Status
 
-### 🔐 **Authentication & Access Control**
-- ✅ Role-based access (Admin, Company, Candidate)
-- ✅ JWT authentication
-- ✅ Secure password hashing (bcrypt)
+**Current Phase:** Active Development (Private)
 
 ### 💼 **Job Management**
 - ✅ Post & manage job openings
