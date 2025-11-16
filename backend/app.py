@@ -45,6 +45,21 @@ def home():
     """Serve the frontend application"""
     return send_from_directory(app.static_folder, 'index.html')
 
+# Catch-all route for frontend - serve index.html for any non-API routes
+@app.route('/<path:path>')
+def catch_all(path):
+    """Serve frontend for all non-API routes"""
+    # If it's an API request that doesn't exist, return 404 JSON
+    if path.startswith('api/'):
+        return jsonify({'error': 'API endpoint not found'}), 404
+    
+    # Try to serve the requested file
+    try:
+        return send_from_directory(app.static_folder, path)
+    except:
+        # If file doesn't exist, serve index.html (for client-side routing)
+        return send_from_directory(app.static_folder, 'index.html')
+
 # API info endpoint
 @app.route('/api')
 def api_info():
