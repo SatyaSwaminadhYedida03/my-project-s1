@@ -16,9 +16,9 @@ def create_job():
     try:
         current_user = get_jwt_identity()
         
-        # Check if user is recruiter
-        if current_user['role'] not in ['recruiter', 'admin']:
-            return jsonify({'error': 'Only recruiters can create job postings'}), 403
+        # Check if user is recruiter/company/admin
+        if current_user['role'] not in ['recruiter', 'company', 'admin']:
+            return jsonify({'error': 'Only recruiters/companies can create job postings'}), 403
         
         data = request.get_json()
         
