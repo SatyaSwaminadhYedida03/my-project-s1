@@ -29,8 +29,17 @@ ENV/
 env/
 .venv
 
-# Environment variables
+# Environment variables - CRITICAL SECURITY
 .env
+.env.local
+.env.production
+*.env
+
+# Secrets & Keys - NEVER COMMIT
+*.pem
+*.key
+*.cert
+secrets/
 
 # IDEs
 .vscode/
@@ -48,7 +57,29 @@ Thumbs.db
 
 # Database
 *.db
+*.sqlite
 *.sqlite3
+
+# MongoDB dumps
+dumps/
+*.bson
+
+# Uploads & User Data - Don't track in git
+uploads/
+smart_hiring_resumes/
+ml_models/*.pkl
+ml_models/*.h5
+
+# Deployment artifacts
+.render/
+.vercel/
+.netlify/
+
+# Large documentation that changes often
+BUILD_*.md
+DEPLOYMENT_*.md
+PROJECT_COMPLETE.md
+COMPLETE_SUMMARY.md3
 
 # MongoDB
 data/

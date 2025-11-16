@@ -1,266 +1,252 @@
-# 🚀 Smart Hiring System - AI-Powered Fair Recruitment Platform
+# 🎯 Smart Hiring System
 
-[![Python](https://img.shields.io/badge/Python-3.10+-blue.svg)](https://www.python.org/)
+**AI-Powered Fair Recruitment Platform** - Deployed & Production-Ready
+
+[![Live Demo](https://img.shields.io/badge/Live-Demo-success)](https://smart-hiring-k1pb.onrender.com)
+[![Python](https://img.shields.io/badge/Python-3.11-blue.svg)](https://www.python.org/)
 [![Flask](https://img.shields.io/badge/Flask-3.0-green.svg)](https://flask.palletsprojects.com/)
-[![MongoDB](https://img.shields.io/badge/MongoDB-6.0+-green.svg)](https://www.mongodb.com/)
-[![License](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
-
-## 📋 Overview
-
-A comprehensive, production-ready recruitment system that eliminates bias and automates hiring from job posting to onboarding. Built with AI/ML for fairness, transparency, and efficiency.
-
-### 🎯 Key Features
-
-#### ✅ **Complete Hiring Workflow**
-- Job Posting Management
-- Candidate Registration & Authentication
-- Resume Upload & Parsing (PDF, DOCX, TXT)
-- **Automated PII Anonymization** (NER + Regex)
-- AI-Powered Skill Extraction
-- Online Assessments (MCQ, Coding, Behavioral)
-- Interview Scheduling
-- Recruiter Analytics Dashboard
-
-#### ✅ **Fairness & Bias Detection**
-- **IBM AIF360** Integration
-- Demographic Parity Analysis
-- Equal Opportunity Metrics
-- Disparate Impact Detection (80% Rule)
-- Comprehensive Audit Reports
-- Algorithmic Transparency
-
-#### ✅ **Advanced Algorithms**
-- **Career Consistency Index (CCI)** - Job stability scoring
-- TF-IDF Similarity Matching
-- Multi-factor Candidate Ranking
-- Skill Gap Analysis
+[![MongoDB Atlas](https://img.shields.io/badge/Database-MongoDB%20Atlas-green.svg)](https://www.mongodb.com/)
 
 ---
 
-## 🏗️ Architecture
+## 🚀 Live Demo
 
-```
-smart-hiring-system/
-├── backend/
-│   ├── models/          # MongoDB data models (5 files)
-│   ├── routes/          # REST API endpoints (5 files, 20+ endpoints)
-│   ├── services/        # Business logic (fairness, etc.)
-│   ├── utils/           # Helpers (parsing, matching, CCI)
-│   ├── scripts/         # DB initialization & seeding
-│   └── app.py           # Flask application
-├── config/              # Configuration management
-├── requirements.txt     # Python dependencies
-├── .env.example         # Environment template
-├── API_DOCUMENTATION.md # Complete API reference
-├── SETUP.md             # Installation guide
-└── IMPLEMENTATION_SUMMARY.md # Feature comparison
-```
+**Access the application:** [https://smart-hiring-k1pb.onrender.com](https://smart-hiring-k1pb.onrender.com)
 
-**Total: 25+ Files | 3000+ Lines of Code**
+**Test Credentials:**
+- **Admin:** admin@smarthiring.com / changeme
+- **Company/Recruiter:** Register new account with "Company" role
+- **Candidate:** Register new account with "Candidate" role
+
+> ⚠️ **Note:** First request after 15min idle takes ~30 seconds (free tier cold start)
 
 ---
 
-## ⚡ Quick Start
+## ✨ Features
 
-### Option 1: Automated Setup (Recommended)
-```powershell
-# Windows PowerShell
-.\start.ps1
-```
+### 🔐 **Authentication & Access Control**
+- ✅ Role-based access (Admin, Company, Candidate)
+- ✅ JWT authentication
+- ✅ Secure password hashing (bcrypt)
 
-Choose option 4 to run all setup steps automatically.
+### 💼 **Job Management**
+- ✅ Post & manage job openings
+- ✅ Job description with required skills
+- ✅ Location, type, salary range
+- ✅ Application deadline tracking
 
-### Option 2: Manual Setup
+### 👤 **Candidate Features**
+- ✅ Resume upload (text format)
+- ✅ PII anonymization (removes emails, phones, gender)
+- ✅ Skill extraction & matching
+- ✅ Job application tracking
 
-#### 1. Install Dependencies
+### 🏢 **Company Dashboard**
+- ✅ Post unlimited jobs
+- ✅ View applicants
+- ✅ Basic candidate screening
+
+### 📊 **Smart Features** (Simplified)
+- ✅ Skill-based matching
+- ✅ Resume anonymization
+- ✅ Basic scoring algorithm
+- ⚠️ Advanced ML features disabled (deployment size constraints)
+
+---
+
+## 🛠️ Tech Stack
+
+**Backend:**
+- Python 3.11
+- Flask 3.0
+- MongoDB Atlas (Cloud Database)
+- JWT Authentication
+- Gunicorn (Production Server)
+
+**Frontend:**
+- Vanilla JavaScript
+- HTML5/CSS3
+- Responsive Design
+
+**Deployment:**
+- Render.com (Backend)
+- MongoDB Atlas (Database)
+- GitHub (Version Control)
+
+---
+
+## 📦 Installation & Local Setup
+
+### Prerequisites
+- Python 3.11+
+- MongoDB (or use MongoDB Atlas)
+- Git
+
+### Quick Start
+
 ```bash
-python -m venv venv
-.\venv\Scripts\Activate.ps1  # Windows
+# Clone repository
+git clone https://github.com/SatyaSwaminadhYedida03/my-project-s1.git
+cd smart-hiring-system
+
+# Create virtual environment
+python -m venv .venv
+.venv\Scripts\activate  # Windows
+source .venv/bin/activate  # Mac/Linux
+
+# Install dependencies
 pip install -r requirements.txt
-python -m spacy download en_core_web_sm
-```
 
-#### 2. Configure Environment
-```bash
+# Set environment variables
 cp .env.example .env
-# Edit .env with your MongoDB URI
+# Edit .env with your MongoDB URI and secrets
+
+# Run locally
+python app.py
 ```
 
-#### 3. Initialize Database
-```bash
-python backend/scripts/init_db.py
-python backend/scripts/seed_db.py
-```
-
-#### 4. Run Application
-```bash
-python backend/app.py
-```
-
-Server runs at: **http://localhost:5000**
-
-#### 5. Test API
-```bash
-python test_api.py
-```
+Access at: http://localhost:5000
 
 ---
 
-## 📚 Documentation
+## 🔧 Environment Variables
 
-| Document | Description |
-|----------|-------------|
-| [SETUP.md](SETUP.md) | Detailed installation guide |
-| [API_DOCUMENTATION.md](API_DOCUMENTATION.md) | Complete API reference |
-| [IMPLEMENTATION_SUMMARY.md](IMPLEMENTATION_SUMMARY.md) | Feature comparison with PPT |
+Create a `.env` file with:
+
+```env
+# Database
+MONGODB_URI=mongodb+srv://user:password@cluster.mongodb.net/smart_hiring_db
+
+# Security
+SECRET_KEY=your-secret-key-here
+JWT_SECRET_KEY=your-jwt-secret-here
+
+# Environment
+FLASK_ENV=development  # or 'production'
+```
+
+> ⚠️ **Never commit `.env` files to git!**
 
 ---
 
-## 🔌 API Endpoints
+## 🚀 Deployment
+
+### Deploy to Render.com
+
+1. Fork this repository
+2. Create account on [Render.com](https://render.com)
+3. Create new Web Service
+4. Connect your GitHub repository
+5. Set environment variables
+6. Deploy!
+
+**Environment Variables to Set:**
+- `MONGODB_URI`
+- `SECRET_KEY`
+- `JWT_SECRET_KEY`
+- `FLASK_ENV=production`
+
+---
+
+## 📚 API Endpoints
 
 ### Authentication
-- `POST /api/auth/register` - Register user
-- `POST /api/auth/login` - Login
-- `GET /api/auth/profile` - Get profile
+```
+POST /api/auth/register  - Register new user
+POST /api/auth/login     - User login
+GET  /api/auth/profile   - Get user profile
+```
 
 ### Jobs
-- `POST /api/jobs/create` - Create job (recruiter)
-- `GET /api/jobs/list` - List jobs
-- `GET /api/jobs/{id}` - Get job details
+```
+POST /api/jobs/create    - Create job (Company/Admin only)
+GET  /api/jobs/list      - List all jobs
+GET  /api/jobs/<id>      - Get job details
+```
 
 ### Candidates
-- `POST /api/candidates/upload-resume` - Upload resume
-- `POST /api/candidates/apply/{job_id}` - Apply to job
-- `GET /api/candidates/applications` - My applications
-
-### Assessments
-- `POST /api/assessments/create` - Create assessment
-- `POST /api/assessments/{id}/submit` - Submit answers
-- `POST /api/assessments/schedule-interview` - Schedule interview
-
-### Dashboard
-- `GET /api/dashboard/analytics` - Recruitment metrics
-- `GET /api/dashboard/fairness/{job_id}` - Fairness audit
-- `GET /api/dashboard/transparency/{app_id}` - Transparency report
-
-**See [API_DOCUMENTATION.md](API_DOCUMENTATION.md) for full details**
-
----
-
-## 🧪 Sample Credentials (After Seeding)
-
 ```
-Recruiter:
-  Email: recruiter@techcorp.com
-  Password: recruiter123
+POST /api/candidates/upload-resume  - Upload resume
+POST /api/candidates/apply          - Apply to job
+GET  /api/candidates/applications   - View applications
+```
 
-Candidate:
-  Email: candidate1@example.com
-  Password: candidate123
+### Health Check
+```
+GET /api/health - System status
 ```
 
 ---
 
-## 🛠️ Technologies
+## 🎯 Current Limitations
 
-### Backend
-- **Flask** - Web framework
-- **MongoDB** - Database
-- **JWT** - Authentication
-- **Bcrypt** - Password hashing
+**Due to deployment size constraints, the following are disabled:**
 
-### AI/ML
-- **scikit-learn** - TF-IDF, Cosine Similarity
-- **spaCy** - NLP & NER
-- **AIF360** - Fairness metrics
-- **pandas/numpy** - Data processing
+- ❌ PDF/DOCX resume parsing (use text format)
+- ❌ Advanced ML matching (scikit-learn removed)
+- ❌ Automated assessments (ML dependencies removed)
+- ❌ Dashboard analytics (pandas removed)
 
-### Utilities
-- **PyPDF2** - PDF parsing
-- **python-docx** - DOCX parsing
-- **APScheduler** - Task scheduling
+**Workaround:** These can be re-enabled by:
+1. Deploying ML as separate microservice, OR
+2. Using paid hosting tier with more resources, OR
+3. Building desktop application with local processing
 
 ---
 
-## 📊 Key Algorithms
+## 🔮 Roadmap
 
-### 1. Career Consistency Index (CCI)
-```python
-CCI = 0.4×tenure + 0.3×frequency + 0.2×progression + 0.1×gaps
-```
-
-### 2. Candidate Score
-```python
-Score = 0.5×TF-IDF_sim + 0.3×skill_match + 0.2×CCI
-```
-
-### 3. Fairness Metrics
-- **Demographic Parity**: |P(Ŷ=1|D=A) - P(Ŷ=1|D=B)| < 0.1
-- **Disparate Impact**: P(Ŷ=1|D=A) / P(Ŷ=1|D=B) >= 0.8
-- **Equal Opportunity**: |TPR(A) - TPR(B)| < 0.1
-
----
-
-## 🎯 Features vs Presentation
-
-| Feature (PPT Slide 15) | Status |
-|------------------------|--------|
-| Job Posting | ✅ |
-| Candidate Registration | ✅ |
-| Resume Upload & Anonymization | ✅ |
-| NLP Skill Extraction | ✅ |
-| Candidate Assessments | ✅ |
-| Interview Scheduling | ✅ |
-| Recruiter Dashboard | ✅ |
-| Fairness Auditing | ✅ |
-| CCI Calculation | ✅ |
-| Transparency Reports | ✅ |
-
-**Implementation: 95%+ Complete** 🎉
-
----
-
-## 🔜 Future Enhancements
-
-- [ ] React.js Frontend
-- [ ] LinkedIn OAuth Integration
-- [ ] Email Notifications
-- [ ] Video Interview Integration
-- [ ] Docker Deployment
-- [ ] CI/CD Pipeline
-
----
-
-## 👥 Team
-
-- **S. Mohana Swarupa** (22VV1A0547)
-- **N. Praneetha** (22VV1A0542)
-- **Y.S.S.D.V.Satya Swaminadh** (22VV1A0555)
-- **Ch. Renuka Sri** (22VV1A0509)
-
-**Project Guide**: Mr. R.D.D.V. SIVARAM
-
----
-
-## 📄 License
-
-MIT License - see [LICENSE](LICENSE) for details
+- [ ] AI Interviewer Integration (OpenAI GPT-4)
+- [ ] Re-enable ML features (separate microservice)
+- [ ] Email notifications (SMTP)
+- [ ] Advanced analytics dashboard
+- [ ] Video interview integration
+- [ ] Skills assessment library
+- [ ] Desktop application (Electron)
+- [ ] Mobile app (React Native)
 
 ---
 
 ## 🤝 Contributing
 
-This is an academic project. For suggestions or improvements, please contact the team.
+This is currently a demo/portfolio project. For collaboration:
+
+1. Fork the repository
+2. Create feature branch
+3. Commit changes
+4. Push to branch
+5. Open Pull Request
+
+---
+
+## 📄 License
+
+MIT License - See [LICENSE](LICENSE) file
+
+---
+
+## 👨‍💻 Developer
+
+**Satya Swaminadh Yedida**
+- GitHub: [@SatyaSwaminadhYedida03](https://github.com/SatyaSwaminadhYedida03)
 
 ---
 
 ## 📞 Support
 
-For issues:
-1. Check [SETUP.md](SETUP.md) for installation help
-2. Review [API_DOCUMENTATION.md](API_DOCUMENTATION.md) for API usage
-3. See [IMPLEMENTATION_SUMMARY.md](IMPLEMENTATION_SUMMARY.md) for feature details
+For issues or questions:
+- Open an issue on GitHub
+- Email: [Your Email]
 
 ---
 
-**Built with ❤️ for Fair and Transparent Hiring**
+## ⚡ Quick Links
+
+- [Live Demo](https://smart-hiring-k1pb.onrender.com)
+- [API Documentation](API_DOCUMENTATION.md)
+- [Deployment Guide](docs/DEPLOYMENT_GUIDE.md)
+- [MongoDB Atlas](https://www.mongodb.com/cloud/atlas)
+
+---
+
+**⭐ Star this repo if you find it useful!**
