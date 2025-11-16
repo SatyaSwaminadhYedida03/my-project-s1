@@ -1,5 +1,6 @@
 """
 Smart Hiring System - Main Application Entry Point
+Version: 1.1.0 - Security Hardened + Job Posting Fixed
 Initializes Flask app with all routes and configurations
 © 2025 Smart Hiring System - Proprietary Software - All Rights Reserved
 """
