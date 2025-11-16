@@ -1,7 +1,7 @@
-"""
-Security Utilities - Helper Functions for Input Sanitization in Frontend
-This creates a safe wrapper for DOM manipulation to prevent XSS attacks
-"""
+/**
+ * Security Utilities - Helper Functions for Input Sanitization in Frontend
+ * This creates a safe wrapper for DOM manipulation to prevent XSS attacks
+ */
 
 // Security utility functions for frontend
 const SecurityUtils = {
