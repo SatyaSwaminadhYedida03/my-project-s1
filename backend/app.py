@@ -17,13 +17,13 @@ from backend.routes import auth_routes, job_routes, candidate_routes
 from backend.utils.license_validator import check_deployment_authorization, require_valid_license
 # Disabled for Vercel: assessment_routes, dashboard_routes (require ML libraries)
 
-# DEPLOYMENT AUTHORIZATION CHECK
-# This prevents unauthorized deployments of the application
-if not check_deployment_authorization():
-    print("\n🚨 CRITICAL: Unauthorized deployment detected")
-    print("This software is proprietary and requires a valid license.")
-    print("Contact: mightyazad@gmail.com or admin@smarthiring.com")
-    sys.exit(1)
+# DEPLOYMENT AUTHORIZATION CHECK (Optional - can be disabled for cloud deployments)
+# Uncomment the following lines to enable license validation:
+# if not check_deployment_authorization():
+#     print("\n🚨 CRITICAL: Unauthorized deployment detected")
+#     print("This software is proprietary and requires a valid license.")
+#     print("Contact: mightyazad@gmail.com or admin@smarthiring.com")
+#     sys.exit(1)
 
 # Initialize Flask app with frontend folder
 frontend_folder = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', 'frontend'))
