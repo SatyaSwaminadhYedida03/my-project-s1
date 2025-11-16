@@ -2,7 +2,7 @@
 // Auto-detect API URL based on environment
 const API_URL = window.location.hostname === 'localhost' 
     ? 'http://localhost:5000/api'
-    : '/api';  // For production (Netlify)
+    : window.location.origin + '/api';  // Use same domain for production
 let currentUser = null;
 let currentRole = null;
 let authToken = null;
