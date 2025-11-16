@@ -1,44 +1,26 @@
+"""
+Resume Parser - Stub Version for Deployment
+Original functionality disabled due to dependency size constraints
+PyPDF2 and python-docx removed to reduce deployment size
+"""
 import re
 import io
-import docx
-from PyPDF2 import PdfReader
 
-# Lazy load spaCy
+# Stub functions - resume parsing disabled for deployment
 def _get_nlp():
-    try:
-        import spacy
-        return spacy.load("en_core_web_sm")
-    except Exception:
-        return None
+    """Stub: NLP functionality disabled"""
+    return None
 
 def extract_text_from_pdf(file_data):
-    """Extract text from PDF file"""
-    try:
-        reader = PdfReader(io.BytesIO(file_data))
-        text = ""
-        for page in reader.pages:
-            page_text = page.extract_text()
-            if page_text:
-                text += page_text + "\n"
-        return text
-    except Exception as e:
-        print(f"Error extracting PDF: {e}")
-        return ""
+    """Stub: PDF extraction disabled for deployment"""
+    return "Resume parsing temporarily disabled. Please use plain text format."
 
 def extract_text_from_docx(file_data):
-    """Extract text from DOCX file"""
-    try:
-        doc = docx.Document(io.BytesIO(file_data))
-        fullText = []
-        for para in doc.paragraphs:
-            fullText.append(para.text)
-        return "\n".join(fullText)
-    except Exception as e:
-        print(f"Error extracting DOCX: {e}")
-        return ""
+    """Stub: DOCX extraction disabled for deployment"""
+    return "Resume parsing temporarily disabled. Please use plain text format."
 
 def extract_text_from_file(file_data, filename):
-    """Extract text from uploaded file based on extension"""
+    """Extract text from uploaded file - stub version"""
     name = filename.lower()
     
     if name.endswith(".pdf"):
@@ -53,7 +35,7 @@ def extract_text_from_file(file_data, filename):
             return str(file_data)
 
 def anonymize_text(text):
-    """Remove PII from text using regex and NER"""
+    """Remove PII from text using basic regex - simplified version"""
     if not isinstance(text, str):
         return ""
     
@@ -69,28 +51,13 @@ def anonymize_text(text):
     # Mask gender words
     text = re.sub(r'\b(Male|Female|male|female|M|F|Man|Woman|man|woman)\b', ' [GENDER] ', text)
     
-    # Use spaCy NER if available (lazy load)
-    nlp = _get_nlp()
-    if nlp:
-        try:
-            doc = nlp(text)
-            ents = list(doc.ents)
-            # Process from end to start to maintain positions
-            for ent in reversed(ents):
-                if ent.label_ in ("PERSON", "GPE", "LOC", "NORP", "ORG", "DATE"):
-                    start = ent.start_char
-                    end = ent.end_char
-                    text = text[:start] + " [REDACTED] " + text[end:]
-        except Exception as e:
-            print(f"NER error: {e}")
-    else:
-        # Fallback: simple header removal
-        lines = [l.strip() for l in text.splitlines() if l.strip()]
-        if lines:
-            first = lines[0]
-            if 1 <= len(first.split()) <= 4 and first == first.title():
-                lines[0] = "[REDACTED HEADER]"
-            text = "\n".join(lines)
+    # Simple header removal (first line if it looks like a name)
+    lines = [l.strip() for l in text.splitlines() if l.strip()]
+    if lines:
+        first = lines[0]
+        if 1 <= len(first.split()) <= 4 and first == first.title():
+            lines[0] = "[REDACTED HEADER]"
+        text = "\n".join(lines)
     
     # Compact whitespace
     text = re.sub(r'\s{2,}', ' ', text)
