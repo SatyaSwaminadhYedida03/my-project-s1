@@ -11,7 +11,7 @@ function loadAdminDashboard() {
         <div style="padding: 40px; max-width: 1200px; margin: 0 auto; font-family: system-ui, -apple-system, sans-serif;">
             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 30px;">
                 <h1 style="color: #4F46E5; margin: 0;">Admin Dashboard</h1>
-                <button onclick="logout()" style="padding: 10px 20px; background: #ef4444; color: white; border: none; border-radius: 8px; cursor: pointer; font-size: 14px; font-weight: 500;">Logout</button>
+                <button onclick="adminLogout()" style="padding: 10px 20px; background: #ef4444; color: white; border: none; border-radius: 8px; cursor: pointer; font-size: 14px; font-weight: 500;">Logout</button>
             </div>
             
             <div style="background: white; padding: 30px; border-radius: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); margin-bottom: 20px;">
@@ -62,4 +62,14 @@ function loadAdminDashboard() {
             </div>
         </div>
     `;
+}
+
+function adminLogout() {
+    // Clear authentication data
+    localStorage.removeItem('authToken');
+    localStorage.removeItem('currentUser');
+    localStorage.removeItem('currentRole');
+    
+    // Reload the page to return to login
+    window.location.href = '/';
 }

@@ -19,7 +19,7 @@ function loadCandidateDashboard() {
             </div>
             <div class="navbar-actions">
                 <span class="user-info">${currentUser.email}</span>
-                <button class="btn btn-secondary" onclick="logout()">Logout</button>
+                <button class="btn btn-secondary" onclick="candidateLogout()">Logout</button>
             </div>
         </nav>
         <div class="main-content">
@@ -344,4 +344,14 @@ function editProfile() {
 
 function uploadResume() {
     alert('Resume upload interface coming soon!');
+}
+
+function candidateLogout() {
+    // Clear authentication data
+    localStorage.removeItem('authToken');
+    localStorage.removeItem('currentUser');
+    localStorage.removeItem('currentRole');
+    
+    // Reload the page to return to login
+    window.location.href = '/';
 }

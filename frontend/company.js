@@ -19,7 +19,7 @@ function loadCompanyDashboard() {
             </div>
             <div class="navbar-actions">
                 <span class="user-info">${currentUser.email}</span>
-                <button class="btn btn-secondary" onclick="logout()">Logout</button>
+                <button class="btn btn-secondary" onclick="companyLogout()">Logout</button>
             </div>
         </nav>
         <div class="main-content">
@@ -300,4 +300,14 @@ async function loadCompanyApplications() {
     } catch (error) {
         container.innerHTML = '<div class="empty-state">Failed to load applications</div>';
     }
+}
+
+function companyLogout() {
+    // Clear authentication data
+    localStorage.removeItem('authToken');
+    localStorage.removeItem('currentUser');
+    localStorage.removeItem('currentRole');
+    
+    // Reload the page to return to login
+    window.location.href = '/';
 }
