@@ -91,6 +91,9 @@ function initializeApp() {
                             <label>Password</label>
                             <input type="password" id="loginPassword" required>
                         </div>
+                        <div class="forgot-password-link">
+                            <a href="forgot-password.html">Forgot Password?</a>
+                        </div>
                         <button type="submit" class="btn btn-primary btn-block">
                             <span class="btn-text">Login</span>
                             <span class="spinner"></span>

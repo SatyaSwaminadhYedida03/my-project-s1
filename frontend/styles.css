@@ -59,6 +59,9 @@ body {
 .error-message.show { display: block; }
 .success-message { background: #f0fdf4; color: #15803d; padding: 12px; border-radius: 8px; margin-top: 16px; display: none; }
 .success-message.show { display: block; }
+.forgot-password-link { text-align: right; margin-top: 8px; margin-bottom: 16px; }
+.forgot-password-link a { color: #4F46E5; text-decoration: none; font-size: 14px; font-weight: 500; }
+.forgot-password-link a:hover { text-decoration: underline; }
 .auth-footer { margin-top: 24px; text-align: center; color: #718096; }
 .auth-footer a { color: #4F46E5; text-decoration: none; font-weight: 600; }
 .auth-footer a:hover { text-decoration: underline; }

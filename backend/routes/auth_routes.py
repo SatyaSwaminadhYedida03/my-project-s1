@@ -1,9 +1,11 @@
 from flask import Blueprint, request, jsonify
 from flask_jwt_extended import create_access_token, jwt_required, get_jwt_identity
 from flask_bcrypt import Bcrypt
-from datetime import datetime
+from datetime import datetime, timedelta
 from bson import ObjectId
 import re
+import secrets
+import hashlib
 
 from backend.models.database import get_db
 from backend.models.user import User, Candidate
@@ -176,6 +178,190 @@ def get_profile():
         del user['password_hash']
         
         return jsonify(user), 200
+        
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+@bp.route('/forgot-password', methods=['POST'])
+def forgot_password():
+    """Request password reset - generates reset token"""
+    try:
+        data = request.get_json()
+        
+        if 'email' not in data:
+            return jsonify({'error': 'Email is required'}), 400
+        
+        email = data['email'].lower().strip()
+        
+        if not validate_email(email):
+            return jsonify({'error': 'Invalid email format'}), 400
+        
+        db = get_db()
+        users_collection = db['users']
+        
+        # Check if user exists
+        user = users_collection.find_one({'email': email})
+        
+        if not user:
+            # Return success even if user doesn't exist (security best practice)
+            return jsonify({
+                'message': 'If an account exists with this email, a password reset link has been sent',
+                'note': 'Email functionality not configured - use reset token below for testing'
+            }), 200
+        
+        # Generate reset token (valid for 1 hour)
+        reset_token = secrets.token_urlsafe(32)
+        reset_token_hash = hashlib.sha256(reset_token.encode()).hexdigest()
+        reset_token_expires = datetime.utcnow() + timedelta(hours=1)
+        
+        # Store reset token in database
+        users_collection.update_one(
+            {'_id': user['_id']},
+            {
+                '$set': {
+                    'reset_token': reset_token_hash,
+                    'reset_token_expires': reset_token_expires,
+                    'updated_at': datetime.utcnow()
+                }
+            }
+        )
+        
+        # TODO: Send email with reset link
+        # For now, return the token for testing purposes
+        reset_link = f"http://localhost:5000/reset-password?token={reset_token}&email={email}"
+        
+        return jsonify({
+            'message': 'Password reset instructions sent',
+            'reset_token': reset_token,  # Remove this in production
+            'reset_link': reset_link,     # Remove this in production
+            'note': 'Email functionality not configured. Use the reset_token for testing'
+        }), 200
+        
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+@bp.route('/reset-password', methods=['POST'])
+def reset_password():
+    """Reset password using reset token"""
+    try:
+        data = request.get_json()
+        
+        # Validate required fields
+        required_fields = ['email', 'reset_token', 'new_password']
+        for field in required_fields:
+            if field not in data:
+                return jsonify({'error': f'Missing required field: {field}'}), 400
+        
+        email = data['email'].lower().strip()
+        reset_token = data['reset_token']
+        new_password = data['new_password']
+        
+        # Validate email
+        if not validate_email(email):
+            return jsonify({'error': 'Invalid email format'}), 400
+        
+        # Validate new password strength
+        if len(new_password) < 6:
+            return jsonify({'error': 'Password must be at least 6 characters'}), 400
+        
+        db = get_db()
+        users_collection = db['users']
+        
+        # Hash the provided token
+        reset_token_hash = hashlib.sha256(reset_token.encode()).hexdigest()
+        
+        # Find user with matching email and valid reset token
+        user = users_collection.find_one({
+            'email': email,
+            'reset_token': reset_token_hash,
+            'reset_token_expires': {'$gt': datetime.utcnow()}
+        })
+        
+        if not user:
+            return jsonify({'error': 'Invalid or expired reset token'}), 400
+        
+        # Hash new password
+        new_password_hash = bcrypt.generate_password_hash(new_password).decode('utf-8')
+        
+        # Update password and clear reset token
+        users_collection.update_one(
+            {'_id': user['_id']},
+            {
+                '$set': {
+                    'password_hash': new_password_hash,
+                    'updated_at': datetime.utcnow()
+                },
+                '$unset': {
+                    'reset_token': '',
+                    'reset_token_expires': ''
+                }
+            }
+        )
+        
+        return jsonify({
+            'message': 'Password reset successfully',
+            'success': True
+        }), 200
+        
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+@bp.route('/change-password', methods=['POST'])
+@jwt_required()
+def change_password():
+    """Change password for logged-in user"""
+    try:
+        current_user = get_jwt_identity()
+        user_id = current_user['user_id']
+        data = request.get_json()
+        
+        # Validate required fields
+        required_fields = ['current_password', 'new_password']
+        for field in required_fields:
+            if field not in data:
+                return jsonify({'error': f'Missing required field: {field}'}), 400
+        
+        current_password = data['current_password']
+        new_password = data['new_password']
+        
+        # Validate new password strength
+        if len(new_password) < 6:
+            return jsonify({'error': 'New password must be at least 6 characters'}), 400
+        
+        if current_password == new_password:
+            return jsonify({'error': 'New password must be different from current password'}), 400
+        
+        db = get_db()
+        users_collection = db['users']
+        
+        # Get user
+        user = users_collection.find_one({'_id': ObjectId(user_id)})
+        
+        if not user:
+            return jsonify({'error': 'User not found'}), 404
+        
+        # Verify current password
+        if not bcrypt.check_password_hash(user['password_hash'], current_password):
+            return jsonify({'error': 'Current password is incorrect'}), 401
+        
+        # Hash new password
+        new_password_hash = bcrypt.generate_password_hash(new_password).decode('utf-8')
+        
+        # Update password
+        users_collection.update_one(
+            {'_id': user['_id']},
+            {
+                '$set': {
+                    'password_hash': new_password_hash,
+                    'updated_at': datetime.utcnow()
+                }
+            }
+        )
+        
+        return jsonify({
+            'message': 'Password changed successfully',
+            'success': True
+        }), 200
         
     except Exception as e:
         return jsonify({'error': str(e)}), 500
