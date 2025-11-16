@@ -1,5 +1,8 @@
 // Smart Hiring System - Main Application
-const API_URL = 'http://localhost:5000/api';
+// Auto-detect API URL based on environment
+const API_URL = window.location.hostname === 'localhost' 
+    ? 'http://localhost:5000/api'
+    : '/api';  // For production (Netlify)
 let currentUser = null;
 let currentRole = null;
 let authToken = null;
