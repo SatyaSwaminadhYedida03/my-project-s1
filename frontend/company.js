@@ -238,16 +238,20 @@ async function submitJob(e) {
         });
         
         const data = await response.json();
+        console.log('Job posting response:', response.status, data);
         
         if (response.ok) {
             alert('✓ Job posted successfully!');
             e.target.closest('.modal').remove();
             loadCompanyJobs();
         } else {
-            alert('Failed to post job: ' + (data.error || 'Unknown error'));
+            const errorMsg = data.error || data.message || JSON.stringify(data);
+            console.error('Job posting failed:', errorMsg);
+            alert('Failed to post job: ' + errorMsg);
         }
     } catch (error) {
         console.error('Error posting job:', error);
+        alert('Failed to post job: ' + error.message);
         alert('Failed to post job: ' + error.message);
     }
 }
