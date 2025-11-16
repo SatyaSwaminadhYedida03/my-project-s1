@@ -19,7 +19,9 @@
 - Requires explicit written permission for any use
 - See [LICENSE](LICENSE) file for complete terms
 
-**For authorization requests, contact:** admin@smarthiring.com
+**For authorization requests, contact:**
+- Primary: mightyazad@gmail.com
+- Alternative: admin@smarthiring.com
 
 ---
 

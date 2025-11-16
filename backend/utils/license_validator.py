@@ -108,7 +108,7 @@ def check_deployment_authorization():
         print("="*70)
         print(f"Error: {validation['message']}")
         print("\nThis software is proprietary and requires authorization.")
-        print("Contact: admin@smarthiring.com for licensing information")
+        print("Contact: mightyazad@gmail.com or admin@smarthiring.com")
         print("="*70 + "\n")
         return False
     

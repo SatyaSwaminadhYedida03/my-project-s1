@@ -197,11 +197,13 @@ Never commit these to git:
 ## 📞 Contact & Authorization Requests
 
 **For licensing and authorization:**
-- Email: admin@smarthiring.com
+- Primary Email: mightyazad@gmail.com
+- Alternative: admin@smarthiring.com
 - Include: Company name, intended use, deployment details
 
 **For security concerns:**
-- Email: admin@smarthiring.com
+- Primary Email: mightyazad@gmail.com
+- Alternative: admin@smarthiring.com
 - Subject: SECURITY ISSUE
 - Response time: 24-48 hours
 

@@ -430,10 +430,11 @@ Before considering yourself fully protected:
 
 ---
 
-## 📧 CONTACT & SUPPORT
+## 📞 CONTACT & SUPPORT
 
 For questions about this security implementation:
-- **Email:** admin@smarthiring.com
+- **Primary Email:** mightyazad@gmail.com
+- **Alternative Email:** admin@smarthiring.com
 - **Documentation:** `docs/SECURITY_PROTOCOLS.md`
 - **License Generator:** `scripts/generate_license.py --help`
 

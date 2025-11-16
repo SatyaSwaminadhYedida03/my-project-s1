@@ -22,7 +22,7 @@ from backend.utils.license_validator import check_deployment_authorization, requ
 if not check_deployment_authorization():
     print("\n🚨 CRITICAL: Unauthorized deployment detected")
     print("This software is proprietary and requires a valid license.")
-    print("Contact: admin@smarthiring.com")
+    print("Contact: mightyazad@gmail.com or admin@smarthiring.com")
     sys.exit(1)
 
 # Initialize Flask app with frontend folder
