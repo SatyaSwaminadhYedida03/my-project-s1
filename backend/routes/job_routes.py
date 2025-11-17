@@ -107,6 +107,52 @@ def list_jobs():
     except Exception as e:
         return jsonify({'error': str(e)}), 500
 
+@bp.route('/company', methods=['GET'])
+@jwt_required()
+def get_company_jobs():
+    """Get jobs posted by the logged-in recruiter/company"""
+    try:
+        user_id = get_jwt_identity()
+        print(f"📋 Fetching jobs for recruiter: {user_id}")
+        
+        db = get_db()
+        jobs_collection = db['jobs']
+        
+        # Get query parameters
+        status = request.args.get('status', 'open')
+        
+        # Query jobs for this recruiter
+        query = {'recruiter_id': user_id}
+        if status:
+            query['status'] = status
+            
+        jobs = list(jobs_collection.find(query).sort('posted_date', -1))
+        
+        print(f"✅ Found {len(jobs)} jobs for recruiter {user_id}")
+        
+        # Convert ObjectId to string
+        for job in jobs:
+            job['_id'] = str(job['_id'])
+            job['recruiter_id'] = str(job['recruiter_id'])
+            # Convert datetime to ISO format string if present
+            if 'posted_date' in job:
+                job['posted_date'] = job['posted_date'].isoformat() if hasattr(job['posted_date'], 'isoformat') else str(job['posted_date'])
+            if 'created_at' in job:
+                job['created_at'] = job['created_at'].isoformat() if hasattr(job['created_at'], 'isoformat') else str(job['created_at'])
+            if 'updated_at' in job:
+                job['updated_at'] = job['updated_at'].isoformat() if hasattr(job['updated_at'], 'isoformat') else str(job['updated_at'])
+        
+        return jsonify({
+            'jobs': jobs,
+            'count': len(jobs)
+        }), 200
+        
+    except Exception as e:
+        print(f"❌ Error fetching company jobs: {str(e)}")
+        import traceback
+        traceback.print_exc()
+        return jsonify({'error': str(e)}), 500
+
 @bp.route('/<job_id>', methods=['GET'])
 def get_job(job_id):
     """Get job details by ID"""
