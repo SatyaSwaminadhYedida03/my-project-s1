@@ -153,6 +153,63 @@ def get_company_jobs():
         traceback.print_exc()
         return jsonify({'error': str(e)}), 500
 
+@bp.route('/company/stats', methods=['GET'])
+@jwt_required()
+def get_company_stats():
+    """Get dashboard statistics for the logged-in recruiter/company"""
+    try:
+        user_id = get_jwt_identity()
+        print(f"📊 Fetching stats for recruiter: {user_id}")
+        
+        db = get_db()
+        jobs_collection = db['jobs']
+        applications_collection = db['applications']
+        
+        # Count active jobs
+        active_jobs = jobs_collection.count_documents({
+            'recruiter_id': user_id,
+            'status': 'open'
+        })
+        
+        # Get all job IDs for this recruiter
+        recruiter_jobs = list(jobs_collection.find(
+            {'recruiter_id': user_id},
+            {'_id': 1}
+        ))
+        job_ids = [str(job['_id']) for job in recruiter_jobs]
+        
+        # Count total applications
+        total_applications = applications_collection.count_documents({
+            'job_id': {'$in': job_ids}
+        }) if job_ids else 0
+        
+        # Count applications by status
+        applications_by_status = {}
+        if job_ids:
+            pipeline = [
+                {'$match': {'job_id': {'$in': job_ids}}},
+                {'$group': {'_id': '$status', 'count': {'$sum': 1}}}
+            ]
+            for doc in applications_collection.aggregate(pipeline):
+                applications_by_status[doc['_id']] = doc['count']
+        
+        print(f"✅ Stats: {active_jobs} jobs, {total_applications} applications")
+        
+        return jsonify({
+            'active_jobs': active_jobs,
+            'total_jobs': len(recruiter_jobs),
+            'total_applications': total_applications,
+            'shortlisted': applications_by_status.get('shortlisted', 0),
+            'interviewed': applications_by_status.get('screening', 0),
+            'hired': applications_by_status.get('hired', 0)
+        }), 200
+        
+    except Exception as e:
+        print(f"❌ Error fetching stats: {str(e)}")
+        import traceback
+        traceback.print_exc()
+        return jsonify({'error': str(e)}), 500
+
 @bp.route('/<job_id>', methods=['GET'])
 def get_job(job_id):
     """Get job details by ID"""

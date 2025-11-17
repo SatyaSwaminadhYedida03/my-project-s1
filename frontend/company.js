@@ -53,7 +53,7 @@ async function loadCompanyOverview() {
     container.innerHTML = '<div class="loading">Loading dashboard...</div>';
     
     try {
-        const response = await fetch(`${API_URL}/dashboard/company`, {
+        const response = await fetch(`${API_URL}/jobs/company/stats`, {
             headers: { 'Authorization': `Bearer ${authToken}` }
         });
         
