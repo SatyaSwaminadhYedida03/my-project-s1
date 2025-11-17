@@ -1,5 +1,5 @@
 from flask import Blueprint, request, jsonify
-from flask_jwt_extended import jwt_required, get_jwt_identity
+from flask_jwt_extended import jwt_required, get_jwt_identity, get_jwt
 from datetime import datetime
 from bson import ObjectId
 
@@ -15,12 +15,15 @@ def create_job():
     """Create a new job posting (recruiter only)"""
     try:
         print("🎯 Job creation attempt")
-        current_user = get_jwt_identity()
-        print(f"👤 Current user from JWT: {current_user}")
+        user_id = get_jwt_identity()  # This is now a string (user_id)
+        claims = get_jwt()  # This contains additional claims like 'role'
+        role = claims.get('role', 'candidate')
+        
+        print(f"👤 Current user ID: {user_id}, Role: {role}")
         
         # Check if user is recruiter/company/admin
-        if current_user['role'] not in ['recruiter', 'company', 'admin']:
-            print(f"❌ Access denied - role: {current_user['role']}")
+        if role not in ['recruiter', 'company', 'admin']:
+            print(f"❌ Access denied - role: {role}")
             return jsonify({'error': 'Only recruiters/companies can create job postings'}), 403
         
         data = request.get_json()
@@ -46,7 +49,7 @@ def create_job():
         job = Job(
             title=data['title'],
             description=data['description'],
-            recruiter_id=current_user['user_id'],
+            recruiter_id=user_id,  # Use the user_id from JWT identity
             company_name=data.get('company_name', ''),
             location=data.get('location', ''),
             job_type=data.get('job_type', 'Full-time'),

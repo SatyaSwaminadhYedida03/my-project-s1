@@ -167,12 +167,10 @@ def login():
             return jsonify({'error': 'Account is deactivated'}), 403
         
         print("🎫 Generating JWT token...")
-        # Generate JWT token
+        # Generate JWT token with user_id as identity and role as additional claim
         access_token = create_access_token(
-            identity={
-                'user_id': str(user['_id']),
-                'role': user['role']
-            }
+            identity=str(user['_id']),
+            additional_claims={'role': user['role']}
         )
         
         print("✅ Login successful!")

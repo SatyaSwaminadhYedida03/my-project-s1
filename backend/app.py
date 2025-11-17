@@ -46,6 +46,8 @@ CORS(app,
          "supports_credentials": True,
          "max_age": 3600
      }})
+
+# Initialize JWT Manager  
 jwt = JWTManager(app)
 
 # Security headers
