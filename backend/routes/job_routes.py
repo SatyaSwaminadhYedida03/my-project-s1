@@ -14,24 +14,33 @@ bp = Blueprint('jobs', __name__)
 def create_job():
     """Create a new job posting (recruiter only)"""
     try:
+        print("🎯 Job creation attempt")
         current_user = get_jwt_identity()
+        print(f"👤 Current user from JWT: {current_user}")
         
         # Check if user is recruiter/company/admin
         if current_user['role'] not in ['recruiter', 'company', 'admin']:
+            print(f"❌ Access denied - role: {current_user['role']}")
             return jsonify({'error': 'Only recruiters/companies can create job postings'}), 403
         
         data = request.get_json()
+        print(f"📦 Received job data: {list(data.keys())}")
         
         # Validate required fields
         required_fields = ['title', 'description']
         for field in required_fields:
             if field not in data:
+                print(f"❌ Missing field: {field}")
                 return jsonify({'error': f'Missing required field: {field}'}), 400
+        
+        print(f"✅ Validation passed - Title: {data['title'][:50]}...")
         
         # Extract skills from job description
         job_skills = data.get('required_skills', [])
         if not job_skills:
             job_skills = extract_skills(data['description'])
+        
+        print(f"🔧 Skills: {job_skills}")
         
         # Create job
         job = Job(
@@ -47,10 +56,12 @@ def create_job():
             deadline=data.get('deadline', None)
         )
         
+        print("💾 Inserting job into database...")
         db = get_db()
         jobs_collection = db['jobs']
         result = jobs_collection.insert_one(job.to_dict())
         
+        print(f"✅ Job created with ID: {result.inserted_id}")
         return jsonify({
             'message': 'Job created successfully',
             'job_id': str(result.inserted_id),
@@ -58,6 +69,9 @@ def create_job():
         }), 201
         
     except Exception as e:
+        print(f"❌ Job creation error: {str(e)}")
+        import traceback
+        traceback.print_exc()
         return jsonify({'error': str(e)}), 500
 
 @bp.route('/list', methods=['GET'])
