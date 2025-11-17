@@ -217,14 +217,26 @@ function showJobModal() {
 async function submitJob(e) {
     e.preventDefault();
     
+    const title = document.getElementById('jobTitle').value.trim();
+    const description = document.getElementById('jobDescription').value.trim();
+    const requirements = document.getElementById('jobRequirements').value.trim();
+    
+    // Validate required fields
+    if (!title || !description) {
+        alert('Title and Description are required!');
+        return;
+    }
+    
+    // Combine description and requirements
+    const fullDescription = description + (requirements ? '\n\nRequirements:\n' + requirements : '');
+    
     const jobData = {
-        title: document.getElementById('jobTitle').value,
-        department: document.getElementById('jobDepartment').value,
-        location: document.getElementById('jobLocation').value,
+        title: title,
+        company_name: document.getElementById('jobDepartment').value.trim() || 'Smart Hiring',
+        location: document.getElementById('jobLocation').value.trim(),
         job_type: document.getElementById('jobType').value,
-        description: document.getElementById('jobDescription').value,
-        requirements: document.getElementById('jobRequirements').value.split('\n').filter(r => r.trim()),
-        required_skills: document.getElementById('jobSkills').value.split(',').map(s => s.trim())
+        description: fullDescription,
+        required_skills: document.getElementById('jobSkills').value.split(',').map(s => s.trim()).filter(s => s)
     };
     
     try {
