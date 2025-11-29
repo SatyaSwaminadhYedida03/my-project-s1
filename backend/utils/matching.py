@@ -8,14 +8,90 @@ def _get_tfidf_vectorizer():
 def _get_cosine_similarity():
     return None
 
-# Master skills list (can be extended)
+# Master skills list - Comprehensive technical skills database (200+ skills)
 SKILLS_MASTER = [
-    "python", "sql", "java", "c++", "c#", "javascript", "react", "node", "html", "css",
-    "machine learning", "deep learning", "nlp", "pandas", "numpy", "tensorflow", "keras",
-    "docker", "kubernetes", "aws", "azure", "git", "tableau", "powerbi", "excel", "matlab",
-    "spark", "hadoop", "scikit-learn", "mongodb", "postgresql", "mysql", "redis",
-    "angular", "vue", "typescript", "flask", "django", "fastapi", "rest api", "graphql",
-    "ci/cd", "jenkins", "github actions", "agile", "scrum", "microservices", "devops"
+    # Programming Languages
+    "python", "java", "javascript", "typescript", "c++", "c#", "c", "go", "golang", "rust",
+    "php", "ruby", "swift", "kotlin", "scala", "r", "perl", "lua", "dart", "objective-c",
+    "visual basic", "vb.net", "cobol", "fortran", "haskell", "elixir", "clojure", "groovy",
+    
+    # Web Frontend
+    "html", "html5", "css", "css3", "sass", "scss", "less", "react", "react.js", "reactjs",
+    "angular", "angular.js", "angularjs", "vue", "vue.js", "vuejs", "svelte", "next.js", "nextjs",
+    "nuxt.js", "gatsby", "jquery", "bootstrap", "tailwind", "tailwind css", "material-ui",
+    "webpack", "vite", "parcel", "rollup", "babel", "redux", "mobx", "vuex", "pinia",
+    
+    # Web Backend & Frameworks
+    "node", "node.js", "nodejs", "express", "express.js", "fastify", "nest.js", "nestjs",
+    "flask", "django", "fastapi", "spring", "spring boot", "springboot", "spring framework",
+    "asp.net", ".net", "dotnet", ".net core", "laravel", "symfony", "codeigniter",
+    "ruby on rails", "rails", "sinatra", "gin", "echo", "fiber", "actix", "rocket",
+    
+    # Mobile Development
+    "react native", "flutter", "ios", "android", "xamarin", "ionic", "cordova", "phonegap",
+    "swiftui", "uikit", "jetpack compose", "kotlin multiplatform",
+    
+    # Databases & Data Storage
+    "sql", "mysql", "postgresql", "postgres", "oracle", "sql server", "mssql", "db2",
+    "mongodb", "cassandra", "couchdb", "dynamodb", "redis", "memcached", "elasticsearch",
+    "neo4j", "arangodb", "influxdb", "timescaledb", "cockroachdb", "mariadb", "sqlite",
+    
+    # Cloud Platforms & Services
+    "aws", "amazon web services", "ec2", "s3", "lambda", "rds", "dynamodb", "cloudfront",
+    "azure", "microsoft azure", "gcp", "google cloud", "google cloud platform", "firebase",
+    "heroku", "digitalocean", "linode", "vultr", "cloudflare", "vercel", "netlify", "render",
+    
+    # DevOps & CI/CD
+    "docker", "kubernetes", "k8s", "jenkins", "gitlab ci", "github actions", "circleci",
+    "travis ci", "bamboo", "teamcity", "ansible", "terraform", "puppet", "chef", "saltstack",
+    "vagrant", "helm", "istio", "prometheus", "grafana", "nagios", "datadog", "new relic",
+    "ci/cd", "devops", "gitops", "argocd", "flux", "spinnaker",
+    
+    # Version Control & Collaboration
+    "git", "github", "gitlab", "bitbucket", "svn", "mercurial", "perforce", "cvs",
+    "jira", "confluence", "trello", "asana", "slack", "microsoft teams", "zoom",
+    
+    # Data Science & ML
+    "machine learning", "deep learning", "artificial intelligence", "ai", "ml", "nlp",
+    "natural language processing", "computer vision", "neural networks", "cnn", "rnn", "lstm",
+    "transformer", "bert", "gpt", "pandas", "numpy", "scipy", "scikit-learn", "sklearn",
+    "tensorflow", "keras", "pytorch", "jax", "xgboost", "lightgbm", "catboost",
+    "opencv", "yolo", "detectron", "hugging face", "langchain", "llama", "stable diffusion",
+    
+    # Big Data & Analytics
+    "hadoop", "spark", "apache spark", "pyspark", "kafka", "apache kafka", "flink", "storm",
+    "hive", "pig", "hbase", "presto", "databricks", "snowflake", "redshift", "bigquery",
+    "tableau", "power bi", "powerbi", "looker", "qlik", "metabase", "superset",
+    
+    # Testing & Quality Assurance
+    "junit", "pytest", "jest", "mocha", "chai", "jasmine", "selenium", "cypress",
+    "playwright", "testng", "cucumber", "postman", "jmeter", "gatling", "k6",
+    "unit testing", "integration testing", "e2e testing", "tdd", "bdd",
+    
+    # API & Integration
+    "rest", "rest api", "restful", "graphql", "grpc", "soap", "websocket", "api gateway",
+    "microservices", "service mesh", "api design", "openapi", "swagger", "postman",
+    
+    # Security & Authentication
+    "oauth", "oauth2", "jwt", "saml", "ldap", "active directory", "ssl", "tls", "https",
+    "penetration testing", "owasp", "security", "cryptography", "encryption", "vault",
+    
+    # Operating Systems & Tools
+    "linux", "unix", "ubuntu", "centos", "redhat", "debian", "windows", "windows server",
+    "macos", "bash", "shell scripting", "powershell", "vim", "emacs", "vscode", "intellij",
+    
+    # Networking & Infrastructure
+    "tcp/ip", "dns", "dhcp", "vpn", "nginx", "apache", "haproxy", "load balancing",
+    "cdn", "firewall", "networking", "http", "https", "routing", "switching",
+    
+    # Project Management & Methodologies
+    "agile", "scrum", "kanban", "waterfall", "lean", "six sigma", "pmp", "prince2",
+    "sprint planning", "retrospective", "standup", "product owner", "scrum master",
+    
+    # Other Technologies & Tools
+    "excel", "vba", "matlab", "labview", "arduino", "raspberry pi", "iot", "blockchain",
+    "ethereum", "solidity", "web3", "smart contracts", "sap", "salesforce", "crm", "erp",
+    "photoshop", "illustrator", "figma", "sketch", "adobe xd", "ui/ux", "design thinking"
 ]
 
 def extract_skills(text):
