@@ -281,6 +281,9 @@ async function loadCompanyCandidates() {
     `;
 }
 
+let selectedApplications = new Set();
+let currentStatusFilter = 'all';
+
 async function loadCompanyApplications() {
     const container = document.getElementById('companyApplications');
     container.innerHTML = '<div class="loading">Loading applications...</div>';
@@ -291,34 +294,373 @@ async function loadCompanyApplications() {
         });
         
         const data = await response.json();
-        const applications = data.applications || [];
+        let applications = data.applications || [];
         
         if (applications.length === 0) {
-            container.innerHTML = '<div class="empty-state">No applications yet</div>';
+            container.innerHTML = `
+                <div class="content-header">
+                    <h2>📋 Applications</h2>
+                </div>
+                <div class="empty-state">
+                    <div style="font-size: 64px; margin-bottom: 16px;">📭</div>
+                    <h3>No Applications Yet</h3>
+                    <p>Applications will appear here once candidates apply to your jobs.</p>
+                </div>
+            `;
             return;
         }
         
+        // Filter applications by status
+        const filteredApps = currentStatusFilter === 'all' 
+            ? applications 
+            : applications.filter(app => app.status === currentStatusFilter);
+        
+        // Calculate statistics
+        const stats = {
+            total: applications.length,
+            pending: applications.filter(a => a.status === 'pending').length,
+            shortlisted: applications.filter(a => a.status === 'shortlisted').length,
+            interviewed: applications.filter(a => a.status === 'interviewed').length,
+            hired: applications.filter(a => a.status === 'hired').length,
+            rejected: applications.filter(a => a.status === 'rejected').length
+        };
+        
         container.innerHTML = `
             <div class="content-header">
-                <h2>📋 Applications</h2>
+                <h2>📋 Applications Management</h2>
+                <div style="display: flex; gap: 12px;">
+                    ${selectedApplications.size > 0 ? `
+                        <button class="btn btn-secondary" onclick="clearSelection()">
+                            Clear (${selectedApplications.size})
+                        </button>
+                        <button class="btn btn-primary" onclick="bulkUpdateStatus()">
+                            Update Selected
+                        </button>
+                    ` : ''}
+                </div>
             </div>
-            <div class="job-grid">
-                ${applications.map(app => `
-                    <div class="job-card">
-                        <h3 class="job-title">${app.candidate_name}</h3>
-                        <p class="job-company">Applied for: ${app.job_title}</p>
-                        <div class="job-meta">
-                            <span>📅 ${new Date(app.applied_at).toLocaleDateString()}</span>
-                            <span class="badge badge-info">${app.status}</span>
-                        </div>
-                        <button class="btn btn-primary" onclick="reviewApplication('${app._id}')">Review Application</button>
-                    </div>
-                `).join('')}
+            
+            <!-- Status Filter Tabs -->
+            <div class="status-filter-tabs">
+                <button class="filter-tab ${currentStatusFilter === 'all' ? 'active' : ''}" 
+                        onclick="filterByStatus('all')">
+                    All (${stats.total})
+                </button>
+                <button class="filter-tab ${currentStatusFilter === 'pending' ? 'active' : ''}" 
+                        onclick="filterByStatus('pending')">
+                    🔵 Pending (${stats.pending})
+                </button>
+                <button class="filter-tab ${currentStatusFilter === 'shortlisted' ? 'active' : ''}" 
+                        onclick="filterByStatus('shortlisted')">
+                    💛 Shortlisted (${stats.shortlisted})
+                </button>
+                <button class="filter-tab ${currentStatusFilter === 'interviewed' ? 'active' : ''}" 
+                        onclick="filterByStatus('interviewed')">
+                    🟣 Interviewed (${stats.interviewed})
+                </button>
+                <button class="filter-tab ${currentStatusFilter === 'hired' ? 'active' : ''}" 
+                        onclick="filterByStatus('hired')">
+                    💚 Hired (${stats.hired})
+                </button>
+                <button class="filter-tab ${currentStatusFilter === 'rejected' ? 'active' : ''}" 
+                        onclick="filterByStatus('rejected')">
+                    ❌ Rejected (${stats.rejected})
+                </button>
+            </div>
+            
+            <!-- Applications Table -->
+            <div class="applications-table-container">
+                <table class="applications-table">
+                    <thead>
+                        <tr>
+                            <th>
+                                <input type="checkbox" onchange="toggleSelectAll(this.checked)" 
+                                       ${selectedApplications.size === filteredApps.length && filteredApps.length > 0 ? 'checked' : ''}>
+                            </th>
+                            <th>Candidate</th>
+                            <th>Job Position</th>
+                            <th>Applied Date</th>
+                            <th>Match Score</th>
+                            <th>Status</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        ${filteredApps.map(app => `
+                            <tr class="application-row ${selectedApplications.has(app._id) ? 'selected' : ''}">
+                                <td>
+                                    <input type="checkbox" 
+                                           ${selectedApplications.has(app._id) ? 'checked' : ''}
+                                           onchange="toggleApplicationSelection('${app._id}', this.checked)">
+                                </td>
+                                <td>
+                                    <div class="candidate-info">
+                                        <div class="candidate-avatar">${app.candidate_name?.charAt(0) || 'C'}</div>
+                                        <div>
+                                            <div class="candidate-name">${app.candidate_name || 'Unknown'}</div>
+                                            <div class="candidate-email">${app.candidate_email || ''}</div>
+                                        </div>
+                                    </div>
+                                </td>
+                                <td>
+                                    <div class="job-info">
+                                        <div class="job-title-cell">${app.job_title}</div>
+                                        <div class="job-company-cell">${app.company_name || ''}</div>
+                                    </div>
+                                </td>
+                                <td>${new Date(app.applied_at).toLocaleDateString('en-US', {month: 'short', day: 'numeric', year: 'numeric'})}</td>
+                                <td>
+                                    <div class="score-badge ${getScoreClass(app.overall_score)}">
+                                        ${Math.round(app.overall_score || 0)}%
+                                    </div>
+                                </td>
+                                <td>
+                                    <div class="status-dropdown">
+                                        <button class="status-badge status-${app.status}" 
+                                                onclick="toggleStatusDropdown('${app._id}', event)">
+                                            ${getStatusIcon(app.status)} ${app.status}
+                                            <span class="dropdown-arrow">▼</span>
+                                        </button>
+                                        <div class="status-dropdown-menu" id="dropdown-${app._id}">
+                                            <div class="status-option" onclick="updateApplicationStatus('${app._id}', 'pending')">
+                                                🔵 Pending
+                                            </div>
+                                            <div class="status-option" onclick="updateApplicationStatus('${app._id}', 'shortlisted')">
+                                                💛 Shortlisted
+                                            </div>
+                                            <div class="status-option" onclick="updateApplicationStatus('${app._id}', 'interviewed')">
+                                                🟣 Interviewed
+                                            </div>
+                                            <div class="status-option" onclick="updateApplicationStatus('${app._id}', 'hired')">
+                                                💚 Hired
+                                            </div>
+                                            <div class="status-option" onclick="updateApplicationStatus('${app._id}', 'rejected')">
+                                                ❌ Rejected
+                                            </div>
+                                        </div>
+                                    </div>
+                                </td>
+                                <td>
+                                    <div class="action-buttons">
+                                        <button class="btn-icon" onclick="viewApplicationDetails('${app._id}')" title="View Details">
+                                            👁️
+                                        </button>
+                                        <button class="btn-icon" onclick="downloadResume('${app._id}')" title="Download Resume">
+                                            📥
+                                        </button>
+                                    </div>
+                                </td>
+                            </tr>
+                        `).join('')}
+                    </tbody>
+                </table>
             </div>
         `;
     } catch (error) {
+        console.error('Failed to load applications:', error);
         container.innerHTML = '<div class="empty-state">Failed to load applications</div>';
     }
+}
+
+function getStatusIcon(status) {
+    const icons = {
+        pending: '🔵',
+        shortlisted: '💛',
+        interviewed: '🟣',
+        hired: '💚',
+        rejected: '❌'
+    };
+    return icons[status] || '⚪';
+}
+
+function getScoreClass(score) {
+    if (score >= 80) return 'score-high';
+    if (score >= 60) return 'score-medium';
+    return 'score-low';
+}
+
+function toggleSelectAll(checked) {
+    const checkboxes = document.querySelectorAll('.application-row input[type="checkbox"]');
+    checkboxes.forEach(cb => {
+        const appId = cb.onchange.toString().match(/'([^']+)'/)[1];
+        if (checked) {
+            selectedApplications.add(appId);
+            cb.checked = true;
+        } else {
+            selectedApplications.delete(appId);
+            cb.checked = false;
+        }
+    });
+    loadCompanyApplications();
+}
+
+function toggleApplicationSelection(appId, checked) {
+    if (checked) {
+        selectedApplications.add(appId);
+    } else {
+        selectedApplications.delete(appId);
+    }
+    loadCompanyApplications();
+}
+
+function clearSelection() {
+    selectedApplications.clear();
+    loadCompanyApplications();
+}
+
+function filterByStatus(status) {
+    currentStatusFilter = status;
+    selectedApplications.clear();
+    loadCompanyApplications();
+}
+
+function toggleStatusDropdown(appId, event) {
+    event.stopPropagation();
+    const dropdown = document.getElementById(`dropdown-${appId}`);
+    
+    // Close all other dropdowns
+    document.querySelectorAll('.status-dropdown-menu').forEach(d => {
+        if (d.id !== `dropdown-${appId}`) {
+            d.classList.remove('show');
+        }
+    });
+    
+    dropdown.classList.toggle('show');
+}
+
+// Close dropdowns when clicking outside
+document.addEventListener('click', () => {
+    document.querySelectorAll('.status-dropdown-menu').forEach(d => {
+        d.classList.remove('show');
+    });
+});
+
+async function updateApplicationStatus(appId, newStatus) {
+    // Show confirmation modal
+    const modal = document.createElement('div');
+    modal.className = 'modal show';
+    modal.innerHTML = `
+        <div class="modal-content" style="max-width: 500px;">
+            <div class="modal-header">
+                <h3 class="modal-title">Confirm Status Update</h3>
+                <button class="modal-close" onclick="this.closest('.modal').remove()">×</button>
+            </div>
+            <div class="modal-body">
+                <p>Are you sure you want to update the status to <strong>${newStatus}</strong>?</p>
+                <div class="form-group">
+                    <label>Add a note (optional):</label>
+                    <textarea id="statusNote" rows="3" placeholder="Reason for status change..."></textarea>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" onclick="this.closest('.modal').remove()">Cancel</button>
+                <button class="btn btn-primary" onclick="confirmStatusUpdate('${appId}', '${newStatus}')">Confirm</button>
+            </div>
+        </div>
+    `;
+    document.body.appendChild(modal);
+}
+
+async function confirmStatusUpdate(appId, newStatus) {
+    const note = document.getElementById('statusNote')?.value || '';
+    const modal = document.querySelector('.modal');
+    
+    try {
+        const response = await fetch(`${API_URL}/company/applications/${appId}/status`, {
+            method: 'PUT',
+            headers: {
+                'Authorization': `Bearer ${authToken}`,
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ status: newStatus, note: note })
+        });
+        
+        if (response.ok) {
+            showNotification(`✓ Status updated to ${newStatus}`, 'success');
+            modal.remove();
+            loadCompanyApplications();
+        } else {
+            const data = await response.json();
+            showNotification('Failed to update status: ' + (data.error || 'Unknown error'), 'error');
+        }
+    } catch (error) {
+        showNotification('Failed to update status: ' + error.message, 'error');
+    }
+}
+
+function bulkUpdateStatus() {
+    if (selectedApplications.size === 0) {
+        showNotification('No applications selected', 'warning');
+        return;
+    }
+    
+    const modal = document.createElement('div');
+    modal.className = 'modal show';
+    modal.innerHTML = `
+        <div class="modal-content" style="max-width: 500px;">
+            <div class="modal-header">
+                <h3 class="modal-title">Bulk Status Update</h3>
+                <button class="modal-close" onclick="this.closest('.modal').remove()">×</button>
+            </div>
+            <div class="modal-body">
+                <p>Update status for <strong>${selectedApplications.size}</strong> selected application(s):</p>
+                <div class="form-group">
+                    <label>New Status:</label>
+                    <select id="bulkStatus" class="form-control">
+                        <option value="pending">🔵 Pending</option>
+                        <option value="shortlisted">💛 Shortlisted</option>
+                        <option value="interviewed">🟣 Interviewed</option>
+                        <option value="hired">💚 Hired</option>
+                        <option value="rejected">❌ Rejected</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Note (optional):</label>
+                    <textarea id="bulkNote" rows="3" placeholder="Reason for bulk update..."></textarea>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" onclick="this.closest('.modal').remove()">Cancel</button>
+                <button class="btn btn-primary" onclick="confirmBulkUpdate()">Update All</button>
+            </div>
+        </div>
+    `;
+    document.body.appendChild(modal);
+}
+
+async function confirmBulkUpdate() {
+    const newStatus = document.getElementById('bulkStatus').value;
+    const note = document.getElementById('bulkNote')?.value || '';
+    const modal = document.querySelector('.modal');
+    
+    try {
+        const promises = Array.from(selectedApplications).map(appId => 
+            fetch(`${API_URL}/company/applications/${appId}/status`, {
+                method: 'PUT',
+                headers: {
+                    'Authorization': `Bearer ${authToken}`,
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ status: newStatus, note: note })
+            })
+        );
+        
+        await Promise.all(promises);
+        showNotification(`✓ Updated ${selectedApplications.size} application(s)`, 'success');
+        selectedApplications.clear();
+        modal.remove();
+        loadCompanyApplications();
+    } catch (error) {
+        showNotification('Failed to update applications: ' + error.message, 'error');
+    }
+}
+
+function viewApplicationDetails(appId) {
+    showNotification('Application details view coming soon!', 'info');
+}
+
+function downloadResume(appId) {
+    showNotification('Resume download coming soon!', 'info');
 }
 
 function companyLogout() {
