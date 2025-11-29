@@ -5,6 +5,7 @@ from bson import ObjectId
 
 from backend.models.database import get_db
 from backend.utils.email_service import email_service
+from backend.utils.matching import calculate_skill_match, compute_overall_score, extract_skills
 
 bp = Blueprint('company', __name__)
 
@@ -218,4 +219,129 @@ def get_application_stats():
         return jsonify(stats), 200
         
     except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+
+@bp.route('/jobs/<job_id>/ranked-candidates', methods=['GET'])
+@jwt_required()
+def get_ranked_candidates(job_id):
+    """Get ranked list of candidates for a specific job"""
+    try:
+        current_user = get_jwt_identity()
+        
+        # Handle both string and dict JWT identity formats
+        if isinstance(current_user, str):
+            user_id = current_user
+            db = get_db()
+            user = db['users'].find_one({'_id': ObjectId(user_id)})
+            if not user:
+                return jsonify({'error': 'User not found'}), 404
+            role = user.get('role')
+        else:
+            user_id = current_user.get('user_id')
+            role = current_user.get('role')
+        
+        if role != 'company':
+            return jsonify({'error': 'Only recruiters can view ranked candidates'}), 403
+        
+        db = get_db()
+        
+        # Verify job belongs to this recruiter
+        job = db['jobs'].find_one({'_id': ObjectId(job_id), 'recruiter_id': user_id})
+        if not job:
+            return jsonify({'error': 'Job not found or unauthorized'}), 404
+        
+        # Get job requirements
+        job_skills = job.get('required_skills', [])
+        job_description = job.get('description', '')
+        job_requirements = job.get('requirements', [])
+        job_text = f"{job_description} {' '.join(job_requirements) if isinstance(job_requirements, list) else job_requirements}"
+        
+        # Get all applications for this job
+        applications = list(db['applications'].find({'job_id': job_id}))
+        
+        ranked_candidates = []
+        
+        for app in applications:
+            candidate_id = app.get('candidate_id')
+            
+            # Get candidate profile
+            candidate = db['candidates'].find_one({'_id': ObjectId(candidate_id)})
+            if not candidate:
+                continue
+            
+            # Get user info for candidate
+            user = db['users'].find_one({'_id': ObjectId(candidate_id)})
+            if not user:
+                continue
+            
+            # Extract candidate skills and resume text
+            candidate_skills = candidate.get('skills', [])
+            resume_text = candidate.get('resume_text', '')
+            
+            # Calculate skill match
+            skill_match_score = calculate_skill_match(job_skills, candidate_skills)
+            
+            # For now, use simplified scoring (TF-IDF requires sklearn which may not be available)
+            # Calculate based on skill match and experience
+            experience_years = candidate.get('experience_years', 0) or candidate.get('experience', 0)
+            
+            # Experience score (normalize to 0-1, max at 10 years)
+            experience_score = min(experience_years / 10.0, 1.0)
+            
+            # Compute overall score (60% skills, 40% experience)
+            overall_score = compute_overall_score(
+                tfidf_score=experience_score,  # Using experience as proxy for TF-IDF
+                skill_match=skill_match_score,
+                cci_score=None
+            )
+            
+            # Find matched and missing skills
+            job_skills_set = set([s.lower() for s in job_skills])
+            candidate_skills_set = set([s.lower() for s in candidate_skills])
+            matched_skills = list(job_skills_set.intersection(candidate_skills_set))
+            missing_skills = list(job_skills_set - candidate_skills_set)
+            
+            # Add to ranked list
+            ranked_candidates.append({
+                'application_id': str(app['_id']),
+                'candidate_id': candidate_id,
+                'candidate_name': user.get('full_name', 'Unknown'),
+                'candidate_email': user.get('email', ''),
+                'applied_date': app.get('applied_date', datetime.utcnow()).isoformat(),
+                'status': app.get('status', 'pending'),
+                'scores': {
+                    'overall_score': overall_score,
+                    'skill_match': round(skill_match_score * 100, 1),
+                    'experience_score': round(experience_score * 100, 1)
+                },
+                'skills': {
+                    'matched': matched_skills,
+                    'missing': missing_skills,
+                    'candidate_skills': candidate_skills,
+                    'match_count': len(matched_skills),
+                    'total_required': len(job_skills)
+                },
+                'experience_years': experience_years,
+                'education': candidate.get('education', 'Not specified'),
+                'location': candidate.get('location', 'Not specified'),
+                'resume_uploaded': candidate.get('resume_uploaded', False)
+            })
+        
+        # Sort by overall score (highest first)
+        ranked_candidates.sort(key=lambda x: x['scores']['overall_score'], reverse=True)
+        
+        # Add rank numbers
+        for i, candidate in enumerate(ranked_candidates, 1):
+            candidate['rank'] = i
+        
+        return jsonify({
+            'job_id': job_id,
+            'job_title': job.get('title', ''),
+            'total_applicants': len(ranked_candidates),
+            'ranked_candidates': ranked_candidates
+        }), 200
+        
+    except Exception as e:
+        print(f"Error in ranked candidates: {e}")
         return jsonify({'error': str(e)}), 500

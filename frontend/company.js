@@ -655,6 +655,181 @@ async function confirmBulkUpdate() {
     }
 }
 
+async function viewJobCandidates(jobId) {
+    const modal = document.createElement('div');
+    modal.className = 'modal show';
+    modal.innerHTML = '<div class="modal-content"><div class="loading">Loading ranked candidates...</div></div>';
+    document.body.appendChild(modal);
+    
+    try {
+        const response = await fetch(`${API_URL}/company/jobs/${jobId}/ranked-candidates`, {
+            headers: { 'Authorization': `Bearer ${authToken}` }
+        });
+        
+        if (!response.ok) {
+            throw new Error('Failed to load candidates');
+        }
+        
+        const data = await response.json();
+        const candidates = data.ranked_candidates || [];
+        
+        modal.innerHTML = `
+            <div class="modal-content" style="max-width: 1000px; max-height: 90vh;">
+                <div class="modal-header" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 24px;">
+                    <div>
+                        <h3 class="modal-title" style="margin: 0; font-size: 24px;">${data.job_title}</h3>
+                        <p style="margin: 8px 0 0 0; opacity: 0.9;">📊 ${data.total_applicants} Applicants - Ranked by AI Matching Score</p>
+                    </div>
+                    <button class="modal-close" onclick="this.closest('.modal').remove()" style="color: white; opacity: 0.9;">×</button>
+                </div>
+                <div class="modal-body" style="padding: 24px; overflow-y: auto; max-height: calc(90vh - 140px);">
+                    ${candidates.length === 0 ? `
+                        <div style="text-align: center; padding: 40px; color: #64748b;">
+                            <div style="font-size: 64px; margin-bottom: 16px;">📭</div>
+                            <h3>No Applicants Yet</h3>
+                            <p>Candidates will appear here once they apply to this job.</p>
+                        </div>
+                    ` : `
+                        ${candidates.map(candidate => `
+                            <div style="background: white; border: 2px solid ${
+                                candidate.scores.overall_score >= 75 ? '#10b981' : 
+                                candidate.scores.overall_score >= 50 ? '#f59e0b' : '#94a3b8'
+                            }; border-radius: 12px; padding: 20px; margin-bottom: 16px; position: relative;">
+                                <!-- Rank Badge -->
+                                <div style="position: absolute; top: -12px; left: 20px; background: ${
+                                    candidate.rank === 1 ? 'linear-gradient(135deg, #fbbf24, #f59e0b)' :
+                                    candidate.rank === 2 ? 'linear-gradient(135deg, #9ca3af, #6b7280)' :
+                                    candidate.rank === 3 ? 'linear-gradient(135deg, #fb923c, #ea580c)' :
+                                    '#667eea'
+                                }; color: white; padding: 6px 16px; border-radius: 20px; font-weight: 700; box-shadow: 0 2px 8px rgba(0,0,0,0.2);">
+                                    ${candidate.rank === 1 ? '🥇' : candidate.rank === 2 ? '🥈' : candidate.rank === 3 ? '🥉' : ''}
+                                    #${candidate.rank}
+                                </div>
+                                
+                                <!-- Candidate Header -->
+                                <div style="display: flex; justify-content: space-between; align-items: start; margin-top: 8px;">
+                                    <div style="flex: 1;">
+                                        <h4 style="margin: 0 0 8px 0; font-size: 20px; color: #1e293b;">${candidate.candidate_name}</h4>
+                                        <div style="display: flex; gap: 16px; flex-wrap: wrap; color: #64748b; font-size: 14px;">
+                                            <span>📧 ${candidate.candidate_email}</span>
+                                            <span>📍 ${candidate.location}</span>
+                                            <span>💼 ${candidate.experience_years} years exp.</span>
+                                            <span>🎓 ${candidate.education}</span>
+                                        </div>
+                                    </div>
+                                    
+                                    <!-- Overall Score -->
+                                    <div style="text-align: center; min-width: 100px;">
+                                        <div style="font-size: 32px; font-weight: 700; color: ${
+                                            candidate.scores.overall_score >= 75 ? '#10b981' : 
+                                            candidate.scores.overall_score >= 50 ? '#f59e0b' : '#64748b'
+                                        };">
+                                            ${candidate.scores.overall_score}%
+                                        </div>
+                                        <div style="font-size: 12px; color: #64748b; text-transform: uppercase; letter-spacing: 0.5px;">
+                                            Match Score
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <!-- Score Breakdown -->
+                                <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; margin: 20px 0;">
+                                    <div style="background: #f0f9ff; padding: 12px; border-radius: 8px; border-left: 3px solid #3b82f6;">
+                                        <div style="font-size: 12px; color: #64748b; margin-bottom: 4px;">📊 Skills Match</div>
+                                        <div style="font-size: 20px; font-weight: 600; color: #1e293b;">
+                                            ${candidate.scores.skill_match}%
+                                            <span style="font-size: 14px; color: #64748b; font-weight: 400;">
+                                                (${candidate.skills.match_count}/${candidate.skills.total_required})
+                                            </span>
+                                        </div>
+                                    </div>
+                                    <div style="background: #fef3f2; padding: 12px; border-radius: 8px; border-left: 3px solid #f97316;">
+                                        <div style="font-size: 12px; color: #64748b; margin-bottom: 4px;">⚡ Experience Score</div>
+                                        <div style="font-size: 20px; font-weight: 600; color: #1e293b;">${candidate.scores.experience_score}%</div>
+                                    </div>
+                                </div>
+                                
+                                <!-- Skills Breakdown -->
+                                <div style="margin-bottom: 16px;">
+                                    <div style="font-weight: 600; margin-bottom: 8px; color: #1e293b;">✅ Matched Skills (${candidate.skills.matched.length})</div>
+                                    <div style="display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 12px;">
+                                        ${candidate.skills.matched.length > 0 ? 
+                                            candidate.skills.matched.map(skill => 
+                                                `<span style="background: #dcfce7; color: #166534; padding: 6px 12px; border-radius: 6px; font-size: 13px; font-weight: 500;">${skill}</span>`
+                                            ).join('') :
+                                            '<span style="color: #94a3b8;">None</span>'
+                                        }
+                                    </div>
+                                    
+                                    ${candidate.skills.missing.length > 0 ? `
+                                        <div style="font-weight: 600; margin-bottom: 8px; color: #1e293b;">⚠️ Missing Skills (${candidate.skills.missing.length})</div>
+                                        <div style="display: flex; flex-wrap: wrap; gap: 6px;">
+                                            ${candidate.skills.missing.map(skill => 
+                                                `<span style="background: #fee2e2; color: #991b1b; padding: 6px 12px; border-radius: 6px; font-size: 13px; font-weight: 500;">${skill}</span>`
+                                            ).join('')}
+                                        </div>
+                                    ` : ''}
+                                </div>
+                                
+                                <!-- Action Buttons -->
+                                <div style="display: flex; gap: 8px; margin-top: 16px;">
+                                    <button class="btn btn-secondary" onclick="viewApplicationDetails('${candidate.application_id}')" style="flex: 1;">
+                                        📄 View Full Profile
+                                    </button>
+                                    <button class="btn ${candidate.status === 'pending' ? 'btn-primary' : 'btn-secondary'}" 
+                                            onclick="updateApplicationStatus('${candidate.application_id}', 'shortlisted')" 
+                                            style="flex: 1;">
+                                        ⭐ ${candidate.status === 'shortlisted' ? 'Shortlisted' : 'Shortlist'}
+                                    </button>
+                                    ${candidate.resume_uploaded ? 
+                                        `<button class="btn btn-secondary" onclick="downloadResume('${candidate.application_id}')">
+                                            📥 Resume
+                                        </button>` : ''
+                                    }
+                                </div>
+                                
+                                <!-- Application Date & Status -->
+                                <div style="margin-top: 12px; padding-top: 12px; border-top: 1px solid #e2e8f0; display: flex; justify-content: space-between; align-items: center; font-size: 13px; color: #64748b;">
+                                    <span>Applied: ${new Date(candidate.applied_date).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}</span>
+                                    <span style="background: ${
+                                        candidate.status === 'hired' ? '#dcfce7' :
+                                        candidate.status === 'shortlisted' ? '#fef3c7' :
+                                        candidate.status === 'interviewed' ? '#e0e7ff' :
+                                        candidate.status === 'rejected' ? '#fee2e2' : '#f1f5f9'
+                                    }; color: ${
+                                        candidate.status === 'hired' ? '#166534' :
+                                        candidate.status === 'shortlisted' ? '#854d0e' :
+                                        candidate.status === 'interviewed' ? '#3730a3' :
+                                        candidate.status === 'rejected' ? '#991b1b' : '#475569'
+                                    }; padding: 4px 12px; border-radius: 12px; font-weight: 600; text-transform: capitalize;">
+                                        ${candidate.status}
+                                    </span>
+                                </div>
+                            </div>
+                        `).join('')}
+                    `}
+                </div>
+                <div class="modal-footer" style="background: #f8fafc; padding: 16px 24px;">
+                    <button class="btn btn-secondary" onclick="this.closest('.modal').remove()">Close</button>
+                </div>
+            </div>
+        `;
+    } catch (error) {
+        console.error('Error loading candidates:', error);
+        modal.innerHTML = `
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h3>Error</h3>
+                    <button class="modal-close" onclick="this.closest('.modal').remove()">×</button>
+                </div>
+                <div class="modal-body">
+                    <div class="alert alert-error">Failed to load candidates. Please try again.</div>
+                </div>
+            </div>
+        `;
+    }
+}
+
 function viewApplicationDetails(appId) {
     showNotification('Application details view coming soon!', 'info');
 }
