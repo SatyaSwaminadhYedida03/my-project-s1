@@ -352,31 +352,54 @@ async function loadCandidateProfile() {
         const skills = profile.skills || [];
         const experience = profile.experience_years || profile.experience || 0;
         const education = profile.education || 'Not provided';
+        const bio = profile.bio || '';
+        const location = profile.location || '';
+        const linkedin = profile.linkedin || '';
+        const portfolio = profile.portfolio || '';
         const resumeUploaded = profile.resume_uploaded || profile.resume_file || false;
         
         container.innerHTML = `
             <div class="content-header">
                 <h2>👤 My Profile</h2>
-                <button class="btn btn-primary" onclick="editProfile()">Edit Profile</button>
+                <button class="btn btn-primary" onclick="editProfile()">✏️ Edit Profile</button>
             </div>
             <div class="card">
-                <h3>${firstName} ${lastName}</h3>
-                <p>📧 ${email}</p>
-                <p>📞 ${phone}</p>
+                <div style="display: flex; justify-content: space-between; align-items: start; margin-bottom: 24px;">
+                    <div>
+                        <h3>${firstName} ${lastName}</h3>
+                        <p>📧 ${email}</p>
+                        <p>📞 ${phone}</p>
+                        ${location ? `<p>📍 ${location}</p>` : ''}
+                    </div>
+                    <div style="text-align: right;">
+                        ${linkedin ? `<a href="${linkedin}" target="_blank" class="btn btn-secondary" style="margin-bottom: 8px; display: inline-block;">🔗 LinkedIn</a><br>` : ''}
+                        ${portfolio ? `<a href="${portfolio}" target="_blank" class="btn btn-secondary" style="display: inline-block;">🌐 Portfolio</a>` : ''}
+                    </div>
+                </div>
+                
+                ${bio ? `
+                    <h4>About Me</h4>
+                    <p style="color: #4a5568; line-height: 1.6; margin-bottom: 24px;">${bio}</p>
+                ` : ''}
                 
                 <h4>Skills</h4>
-                <div class="job-tags">
+                <div class="job-tags" style="margin-bottom: 24px;">
                     ${skills.length > 0 ? 
                         skills.map(s => `<span class="tag">${s}</span>`).join('') :
                         '<p class="text-muted">No skills added</p>'
                     }
                 </div>
                 
-                <h4>Experience</h4>
-                <p>${experience} years</p>
-                
-                <h4>Education</h4>
-                <p>${education}</p>
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 24px; margin-bottom: 24px;">
+                    <div>
+                        <h4>Experience</h4>
+                        <p>${experience} years</p>
+                    </div>
+                    <div>
+                        <h4>Education</h4>
+                        <p>${education}</p>
+                    </div>
+                </div>
                 
                 <h4>Resume</h4>
                 ${resumeUploaded ? 
@@ -420,8 +443,170 @@ async function loadCandidateProfile() {
 }
 
 function editProfile() {
-    // TODO: Implement profile editing
-    showNotification('Profile editing coming soon!', 'info');
+    // Get current profile data
+    const nameElement = document.querySelector('.card h3');
+    const currentName = nameElement ? nameElement.textContent : '';
+    const firstName = currentName.split(' ')[0] || '';
+    const lastName = currentName.split(' ').slice(1).join(' ') || '';
+    
+    const emailElement = document.querySelector('.card p');
+    const currentEmail = emailElement ? emailElement.textContent.replace('📧 ', '') : currentUser.email;
+    
+    const phoneElement = document.querySelectorAll('.card p')[1];
+    const currentPhone = phoneElement ? phoneElement.textContent.replace('📞 ', '').replace('Not provided', '') : '';
+    
+    const skillsElements = document.querySelectorAll('.tag');
+    const currentSkills = Array.from(skillsElements).map(el => el.textContent).join(', ');
+    
+    const expElement = Array.from(document.querySelectorAll('.card p')).find(p => p.previousElementSibling?.textContent === 'Experience');
+    const currentExperience = expElement ? expElement.textContent.replace(' years', '') : '0';
+    
+    const eduElement = Array.from(document.querySelectorAll('.card p')).find(p => p.previousElementSibling?.textContent === 'Education');
+    const currentEducation = eduElement ? eduElement.textContent : '';
+    
+    // Create edit profile modal
+    const modal = document.createElement('div');
+    modal.className = 'modal show';
+    modal.innerHTML = `
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 class="modal-title">✏️ Edit Profile</h3>
+                <button class="modal-close" onclick="this.closest('.modal').remove()">×</button>
+            </div>
+            <form id="editProfileForm" onsubmit="submitProfileEdit(event)">
+                <div class="modal-body">
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>First Name *</label>
+                            <input type="text" name="firstName" value="${firstName}" required>
+                        </div>
+                        <div class="form-group">
+                            <label>Last Name *</label>
+                            <input type="text" name="lastName" value="${lastName}" required>
+                        </div>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label>Email *</label>
+                        <input type="email" name="email" value="${currentEmail}" required disabled>
+                        <small style="color: #718096;">Email cannot be changed</small>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label>Phone Number</label>
+                        <input type="tel" name="phone" value="${currentPhone}" placeholder="+1 (555) 123-4567">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label>Skills (comma-separated)</label>
+                        <input type="text" name="skills" value="${currentSkills}" 
+                               placeholder="JavaScript, Python, React, Node.js">
+                        <small style="color: #718096;">Separate skills with commas</small>
+                    </div>
+                    
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>Years of Experience</label>
+                            <input type="number" name="experience" value="${currentExperience}" 
+                                   min="0" max="50" step="0.5">
+                        </div>
+                        <div class="form-group">
+                            <label>Current Location</label>
+                            <input type="text" name="location" placeholder="San Francisco, CA">
+                        </div>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label>Education</label>
+                        <textarea name="education" rows="3" placeholder="Bachelor's in Computer Science, Stanford University">${currentEducation}</textarea>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label>About / Bio</label>
+                        <textarea name="bio" rows="4" placeholder="Tell us about yourself, your experience, and career goals..."></textarea>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label>LinkedIn Profile URL</label>
+                        <input type="url" name="linkedin" placeholder="https://linkedin.com/in/yourprofile">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label>Portfolio Website</label>
+                        <input type="url" name="portfolio" placeholder="https://yourportfolio.com">
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" onclick="this.closest('.modal').remove()">Cancel</button>
+                    <button type="submit" class="btn btn-primary">
+                        💾 Save Profile
+                    </button>
+                </div>
+            </form>
+        </div>
+    `;
+    
+    document.body.appendChild(modal);
+}
+
+async function submitProfileEdit(e) {
+    e.preventDefault();
+    const form = e.target;
+    const submitBtn = form.querySelector('button[type="submit"]');
+    const originalText = submitBtn.innerHTML;
+    
+    submitBtn.disabled = true;
+    submitBtn.innerHTML = '<span class="spinner show"></span> Saving...';
+    
+    try {
+        const formData = new FormData(form);
+        const skills = formData.get('skills') 
+            ? formData.get('skills').split(',').map(s => s.trim()).filter(s => s)
+            : [];
+        
+        const profileData = {
+            first_name: formData.get('firstName'),
+            last_name: formData.get('lastName'),
+            phone: formData.get('phone'),
+            skills: skills,
+            experience: parseFloat(formData.get('experience')) || 0,
+            education: formData.get('education'),
+            bio: formData.get('bio'),
+            location: formData.get('location'),
+            linkedin: formData.get('linkedin'),
+            portfolio: formData.get('portfolio')
+        };
+        
+        const response = await fetch(`${API_URL}/candidates/profile`, {
+            method: 'PUT',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${authToken}`
+            },
+            body: JSON.stringify(profileData)
+        });
+        
+        const contentType = response.headers.get('content-type');
+        if (contentType && contentType.includes('application/json')) {
+            const data = await response.json();
+            
+            if (response.ok) {
+                showNotification('✓ Profile updated successfully!', 'success');
+                form.closest('.modal').remove();
+                loadCandidateProfile(); // Reload profile to show updates
+            } else {
+                throw new Error(data.error || 'Failed to update profile');
+            }
+        } else {
+            throw new Error('Server returned non-JSON response');
+        }
+    } catch (error) {
+        console.error('Profile update error:', error);
+        showNotification('Failed to update profile: ' + error.message, 'error');
+    } finally {
+        submitBtn.disabled = false;
+        submitBtn.innerHTML = originalText;
+    }
 }
 
 function uploadResume() {

@@ -315,3 +315,63 @@ def get_candidate_profile():
         
     except Exception as e:
         return jsonify({'error': str(e)}), 500
+
+@bp.route('/profile', methods=['PUT'])
+@jwt_required()
+def update_candidate_profile():
+    """Update candidate profile details"""
+    try:
+        current_user = get_jwt_identity()
+        
+        # Handle both string and dict JWT identity formats
+        if isinstance(current_user, str):
+            user_id = current_user
+        else:
+            user_id = current_user.get('user_id')
+        
+        data = request.get_json()
+        
+        # Validate required fields
+        if not data.get('first_name') or not data.get('last_name'):
+            return jsonify({'error': 'First name and last name are required'}), 400
+        
+        db = get_db()
+        candidates_collection = db['candidates']
+        users_collection = db['users']
+        
+        # Prepare update data
+        update_data = {
+            'first_name': data.get('first_name'),
+            'last_name': data.get('last_name'),
+            'phone': data.get('phone', ''),
+            'skills': data.get('skills', []),
+            'experience_years': float(data.get('experience', 0)),
+            'education': data.get('education', ''),
+            'bio': data.get('bio', ''),
+            'location': data.get('location', ''),
+            'linkedin': data.get('linkedin', ''),
+            'portfolio': data.get('portfolio', ''),
+            'updated_at': datetime.utcnow()
+        }
+        
+        # Update candidate profile
+        result = candidates_collection.update_one(
+            {'user_id': user_id},
+            {'$set': update_data},
+            upsert=True
+        )
+        
+        # Update user full_name in users collection
+        full_name = f"{data.get('first_name')} {data.get('last_name')}"
+        users_collection.update_one(
+            {'_id': ObjectId(user_id)},
+            {'$set': {'full_name': full_name}}
+        )
+        
+        return jsonify({
+            'message': 'Profile updated successfully',
+            'profile': update_data
+        }), 200
+        
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
