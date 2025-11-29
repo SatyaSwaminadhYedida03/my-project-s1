@@ -245,15 +245,15 @@ PUT  /api/email/preferences
 ```
 Admin:
 Email: admin@test.com
-Password: admin123
+Password: test123
 
 Company:
 Email: company@test.com
-Password: company123
+Password: test123
 
 Candidate:
 Email: candidate@test.com
-Password: candidate123
+Password: test123
 ```
 
 ### Manual Test Checklist
