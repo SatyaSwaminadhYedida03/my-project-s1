@@ -16,20 +16,47 @@ def get_analytics():
     try:
         current_user = get_jwt_identity()
         
-        if current_user['role'] not in ['recruiter', 'admin']:
-            return jsonify({'error': 'Only recruiters can view analytics'}), 403
+        # Handle both string and dict JWT identity formats
+        if isinstance(current_user, str):
+            user_id = current_user
+            db = get_db()
+            users_collection = db['users']
+            user = users_collection.find_one({'_id': ObjectId(user_id)})
+            if not user:
+                return jsonify({'error': 'User not found'}), 404
+            role = user.get('role')
+        else:
+            user_id = current_user.get('user_id')
+            role = current_user.get('role')
+        
+        if role not in ['recruiter', 'admin', 'candidate']:
+            return jsonify({'error': 'Not authorized'}), 403
         
         db = get_db()
         jobs_collection = db['jobs']
         applications_collection = db['applications']
         
-        # Get recruiter's jobs
-        recruiter_id = current_user['user_id']
-        jobs = list(jobs_collection.find({'recruiter_id': recruiter_id}))
-        job_ids = [str(job['_id']) for job in jobs]
-        
-        # Get all applications for these jobs
-        applications = list(applications_collection.find({'job_id': {'$in': job_ids}}))
+        # Get recruiter's jobs or candidate's applications
+        if role == 'candidate':
+            # For candidates, show their application analytics
+            applications = list(applications_collection.find({'candidate_id': user_id}))
+            jobs = []
+            for app in applications:
+                job = jobs_collection.find_one({'_id': ObjectId(app['job_id'])})
+                if job:
+                    jobs.append(job)
+            recruiter_id = None
+        else:
+            # For recruiters/admins
+            recruiter_id = user_id
+        else:
+            # For recruiters/admins
+            recruiter_id = user_id
+            jobs = list(jobs_collection.find({'recruiter_id': recruiter_id}))
+            job_ids = [str(job['_id']) for job in jobs]
+            
+            # Get all applications for these jobs
+            applications = list(applications_collection.find({'job_id': {'$in': job_ids}}))
         
         # Calculate statistics
         total_jobs = len(jobs)
@@ -79,7 +106,20 @@ def get_fairness_audit(job_id):
     try:
         current_user = get_jwt_identity()
         
-        if current_user['role'] not in ['recruiter', 'admin']:
+        # Handle both string and dict JWT identity formats
+        if isinstance(current_user, str):
+            user_id = current_user
+            db = get_db()
+            users_collection = db['users']
+            user = users_collection.find_one({'_id': ObjectId(user_id)})
+            if not user:
+                return jsonify({'error': 'User not found'}), 404
+            role = user.get('role')
+        else:
+            user_id = current_user.get('user_id')
+            role = current_user.get('role')
+        
+        if role not in ['recruiter', 'admin']:
             return jsonify({'error': 'Only recruiters can view fairness audits'}), 403
         
         db = get_db()
@@ -92,7 +132,7 @@ def get_fairness_audit(job_id):
         if not job:
             return jsonify({'error': 'Job not found'}), 404
         
-        if str(job['recruiter_id']) != current_user['user_id'] and current_user['role'] != 'admin':
+        if str(job['recruiter_id']) != user_id and role != 'admin':
             return jsonify({'error': 'Not authorized'}), 403
         
         # Get applications
@@ -148,6 +188,19 @@ def get_transparency_report(application_id):
     try:
         current_user = get_jwt_identity()
         
+        # Handle both string and dict JWT identity formats
+        if isinstance(current_user, str):
+            user_id = current_user
+            db = get_db()
+            users_collection = db['users']
+            user = users_collection.find_one({'_id': ObjectId(user_id)})
+            if not user:
+                return jsonify({'error': 'User not found'}), 404
+            role = user.get('role')
+        else:
+            user_id = current_user.get('user_id')
+            role = current_user.get('role')
+        
         db = get_db()
         applications_collection = db['applications']
         jobs_collection = db['jobs']
@@ -158,12 +211,12 @@ def get_transparency_report(application_id):
             return jsonify({'error': 'Application not found'}), 404
         
         # Check authorization
-        if current_user['role'] == 'candidate' and application['candidate_id'] != current_user['user_id']:
+        if role == 'candidate' and application['candidate_id'] != user_id:
             return jsonify({'error': 'Not authorized'}), 403
         
-        if current_user['role'] == 'recruiter':
+        if role == 'recruiter':
             job = jobs_collection.find_one({'_id': ObjectId(application['job_id'])})
-            if str(job['recruiter_id']) != current_user['user_id']:
+            if str(job['recruiter_id']) != user_id:
                 return jsonify({'error': 'Not authorized'}), 403
         
         # Generate transparency report
