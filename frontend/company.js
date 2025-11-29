@@ -49,8 +49,6 @@ function switchCompanyTab(tab) {
         case 'applications': loadCompanyApplications(); break;
         case 'analytics': loadCompanyAnalytics(); break;
         case 'audit': loadCompanyAudit(); break;
-    }   case 'candidates': loadCompanyCandidates(); break;
-        case 'applications': loadCompanyApplications(); break;
     }
 }
 
