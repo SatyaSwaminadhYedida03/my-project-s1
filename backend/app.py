@@ -14,7 +14,7 @@ from flask_cors import CORS
 from flask_jwt_extended import JWTManager
 from config.config import config
 from backend.models.database import Database
-from backend.routes import auth_routes, job_routes, candidate_routes, company_routes, email_preferences_routes, assessment_routes, audit_routes, dsr_routes
+from backend.routes import auth_routes, job_routes, candidate_routes, company_routes, email_preferences_routes, assessment_routes, audit_routes, dsr_routes, dashboard_routes
 from backend.utils.license_validator import check_deployment_authorization, require_valid_license
 from backend.utils.env_config import env_config, print_startup_banner
 from backend.utils.monitoring import initialize_monitoring
@@ -28,8 +28,6 @@ logging.basicConfig(
     format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
 )
 logger = logging.getLogger(__name__)
-
-# Disabled for Render free tier: dashboard_routes (require ML libraries)
 
 # DEPLOYMENT AUTHORIZATION CHECK (Optional - can be disabled for cloud deployments)
 # Uncomment the following lines to enable license validation:
@@ -87,8 +85,7 @@ app.register_blueprint(email_preferences_routes.bp, url_prefix='/api/email')
 app.register_blueprint(assessment_routes.bp, url_prefix='/api/assessments')
 app.register_blueprint(audit_routes.bp, url_prefix='/api/audit')
 app.register_blueprint(dsr_routes.bp, url_prefix='/api/dsr')
-# Disabled for Render free tier (require ML libraries):
-# app.register_blueprint(dashboard_routes.bp, url_prefix='/api/dashboard')
+app.register_blueprint(dashboard_routes.bp, url_prefix='/api/dashboard')
 
 # Initialize monitoring & observability
 initialize_monitoring(app)
