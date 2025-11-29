@@ -20,7 +20,20 @@ def upload_resume():
     try:
         current_user = get_jwt_identity()
         
-        if current_user['role'] != 'candidate':
+        # Handle both string and dict JWT identity formats
+        if isinstance(current_user, str):
+            user_id = current_user
+            db = get_db()
+            users_collection = db['users']
+            user = users_collection.find_one({'_id': ObjectId(user_id)})
+            if not user:
+                return jsonify({'error': 'User not found'}), 404
+            role = user.get('role')
+        else:
+            user_id = current_user.get('user_id')
+            role = current_user.get('role')
+        
+        if role != 'candidate':
             return jsonify({'error': 'Only candidates can upload resumes'}), 403
         
         # Check if file is present
@@ -74,7 +87,7 @@ def upload_resume():
             update_data['cci_score'] = cci_result['cci_score']
         
         result = candidates_collection.update_one(
-            {'user_id': current_user['user_id']},
+            {'user_id': user_id},
             {'$set': update_data},
             upsert=True
         )
@@ -82,7 +95,7 @@ def upload_resume():
         # Mark profile as completed
         users_collection = db['users']
         users_collection.update_one(
-            {'_id': ObjectId(current_user['user_id'])},
+            {'_id': ObjectId(user_id)},
             {'$set': {'profile_completed': True}}
         )
         
@@ -104,7 +117,21 @@ def apply_to_job(job_id):
     try:
         current_user = get_jwt_identity()
         
-        if current_user['role'] != 'candidate':
+        # Handle both string and dict JWT identity formats
+        if isinstance(current_user, str):
+            user_id = current_user
+            # Fetch user role from database
+            db = get_db()
+            users_collection = db['users']
+            user = users_collection.find_one({'_id': ObjectId(user_id)})
+            if not user:
+                return jsonify({'error': 'User not found'}), 404
+            role = user.get('role')
+        else:
+            user_id = current_user.get('user_id')
+            role = current_user.get('role')
+        
+        if role != 'candidate':
             return jsonify({'error': 'Only candidates can apply to jobs'}), 403
         
         db = get_db()
@@ -117,19 +144,19 @@ def apply_to_job(job_id):
         if not job:
             return jsonify({'error': 'Job not found'}), 404
         
-        if job['status'] != 'open':
+        if job.get('status', 'open') != 'open':
             return jsonify({'error': 'Job is not accepting applications'}), 400
         
         # Check if already applied
         existing_app = applications_collection.find_one({
             'job_id': job_id,
-            'candidate_id': current_user['user_id']
+            'candidate_id': user_id
         })
         if existing_app:
             return jsonify({'error': 'Already applied to this job'}), 409
         
         # Get candidate profile
-        candidate = candidates_collection.find_one({'user_id': current_user['user_id']})
+        candidate = candidates_collection.find_one({'user_id': user_id})
         if not candidate:
             return jsonify({'error': 'Complete your profile first'}), 400
         
@@ -148,7 +175,7 @@ def apply_to_job(job_id):
         # Create application
         application = Application(
             job_id=job_id,
-            candidate_id=current_user['user_id'],
+            candidate_id=user_id,
             resume_match_score=analysis['tfidf_score'],
             skill_match_score=analysis['skill_match'],
             overall_score=analysis['overall_score'],
@@ -167,7 +194,7 @@ def apply_to_job(job_id):
         
         # Update candidate applications list
         candidates_collection.update_one(
-            {'user_id': current_user['user_id']},
+            {'user_id': user_id},
             {'$push': {'applications': job_id}}
         )
         
@@ -190,7 +217,20 @@ def get_my_applications():
     try:
         current_user = get_jwt_identity()
         
-        if current_user['role'] != 'candidate':
+        # Handle both string and dict JWT identity formats
+        if isinstance(current_user, str):
+            user_id = current_user
+            db = get_db()
+            users_collection = db['users']
+            user = users_collection.find_one({'_id': ObjectId(user_id)})
+            if not user:
+                return jsonify({'error': 'User not found'}), 404
+            role = user.get('role')
+        else:
+            user_id = current_user.get('user_id')
+            role = current_user.get('role')
+        
+        if role != 'candidate':
             return jsonify({'error': 'Only candidates can view their applications'}), 403
         
         db = get_db()
@@ -199,7 +239,7 @@ def get_my_applications():
         
         # Get applications
         applications = list(applications_collection.find(
-            {'candidate_id': current_user['user_id']}
+            {'candidate_id': user_id}
         ).sort('applied_date', -1))
         
         # Enrich with job details
@@ -225,19 +265,25 @@ def get_candidate_profile():
     try:
         current_user = get_jwt_identity()
         
+        # Handle both string and dict JWT identity formats
+        if isinstance(current_user, str):
+            user_id = current_user
+        else:
+            user_id = current_user.get('user_id')
+        
         db = get_db()
         candidates_collection = db['candidates']
         users_collection = db['users']
         
         # Get or create candidate profile
-        candidate = candidates_collection.find_one({'user_id': current_user['user_id']})
+        candidate = candidates_collection.find_one({'user_id': user_id})
         
         if not candidate:
             # Create default candidate profile
-            user = users_collection.find_one({'_id': ObjectId(current_user['user_id'])})
+            user = users_collection.find_one({'_id': ObjectId(user_id)})
             
             default_profile = {
-                'user_id': current_user['user_id'],
+                'user_id': user_id,
                 'email': user.get('email', ''),
                 'first_name': user.get('full_name', '').split()[0] if user.get('full_name') else '',
                 'last_name': ' '.join(user.get('full_name', '').split()[1:]) if user.get('full_name') else '',
