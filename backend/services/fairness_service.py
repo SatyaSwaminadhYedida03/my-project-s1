@@ -3,7 +3,7 @@ Fairness & Bias Prevention Service
 Simplified version for Render deployment (ML libraries removed for size constraints)
 """
 
-# ML libraries not available in Render free tier (size constraints)
+import pandas as pd
 from collections import defaultdict
 
 try:

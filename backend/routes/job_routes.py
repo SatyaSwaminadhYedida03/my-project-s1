@@ -210,6 +210,54 @@ def get_company_stats():
         traceback.print_exc()
         return jsonify({'error': str(e)}), 500
 
+@bp.route('/company/applications', methods=['GET'])
+@jwt_required()
+def get_company_applications():
+    """Get all applications for jobs posted by the logged-in recruiter"""
+    try:
+        user_id = get_jwt_identity()
+        
+        db = get_db()
+        jobs_collection = db['jobs']
+        applications_collection = db['applications']
+        
+        # Get all job IDs for this recruiter
+        recruiter_jobs = list(jobs_collection.find(
+            {'recruiter_id': user_id},
+            {'_id': 1, 'title': 1}
+        ))
+        
+        if not recruiter_jobs:
+            return jsonify({'applications': [], 'count': 0}), 200
+            
+        # Create a map of job_id to job_title for enrichment
+        job_map = {str(job['_id']): job['title'] for job in recruiter_jobs}
+        job_ids = list(job_map.keys())
+        
+        # Get applications for these jobs
+        applications = list(applications_collection.find(
+            {'job_id': {'$in': job_ids}}
+        ).sort('applied_at', -1))
+        
+        # Enrich applications with job titles and convert ObjectIds
+        for app in applications:
+            app['_id'] = str(app['_id'])
+            app['job_title'] = job_map.get(app['job_id'], 'Unknown Job')
+            # Ensure dates are strings
+            if 'applied_at' in app:
+                app['applied_at'] = app['applied_at'].isoformat() if hasattr(app['applied_at'], 'isoformat') else str(app['applied_at'])
+        
+        return jsonify({
+            'applications': applications,
+            'count': len(applications)
+        }), 200
+        
+    except Exception as e:
+        print(f"❌ Error fetching company applications: {str(e)}")
+        import traceback
+        traceback.print_exc()
+        return jsonify({'error': str(e)}), 500
+
 @bp.route('/<job_id>', methods=['GET'])
 def get_job(job_id):
     """Get job details by ID"""

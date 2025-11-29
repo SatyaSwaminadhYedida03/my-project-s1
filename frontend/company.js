@@ -286,7 +286,7 @@ async function loadCompanyApplications() {
     container.innerHTML = '<div class="loading">Loading applications...</div>';
     
     try {
-        const response = await fetch(`${API_URL}/applications/company`, {
+        const response = await fetch(`${API_URL}/jobs/company/applications`, {
             headers: { 'Authorization': `Bearer ${authToken}` }
         });
         

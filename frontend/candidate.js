@@ -180,20 +180,20 @@ async function applyToJob(jobId) {
     if (!confirm('Apply to this job? Make sure you have completed required assessments and updated your profile.')) return;
     
     try {
-        const response = await fetch(`${API_URL}/applications`, {
+        const response = await fetch(`${API_URL}/candidates/apply/${jobId}`, {
             method: 'POST',
             headers: {
                 'Authorization': `Bearer ${authToken}`,
                 'Content-Type': 'application/json'
             },
-            body: JSON.stringify({ job_id: jobId })
+            body: JSON.stringify({})
         });
         
         if (response.ok) {
             alert('✓ Application submitted successfully! You can track it in "My Applications".');
         } else {
             const error = await response.json();
-            throw new Error(error.message || 'Failed to apply');
+            throw new Error(error.message || error.error || 'Failed to apply');
         }
     } catch (error) {
         alert('Failed to submit application: ' + error.message);
@@ -205,7 +205,7 @@ async function loadCandidateApplications() {
     container.innerHTML = '<div class="loading">Loading applications...</div>';
     
     try {
-        const response = await fetch(`${API_URL}/applications/candidate`, {
+        const response = await fetch(`${API_URL}/candidates/applications`, {
             headers: { 'Authorization': `Bearer ${authToken}` }
         });
         

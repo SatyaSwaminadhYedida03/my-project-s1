@@ -17,3 +17,7 @@ apscheduler==3.10.4
 
 # Utilities
 python-dateutil==2.8.2
+
+# Testing
+pytest==7.4.3
+pytest-flask==1.3.0
