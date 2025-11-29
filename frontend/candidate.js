@@ -161,51 +161,67 @@ async function viewJobDetails(jobId) {
         const modal = document.createElement('div');
         modal.className = 'modal show';
         modal.innerHTML = `
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h3 class="modal-title">${job.title}</h3>
-                    <button class="modal-close" onclick="this.closest('.modal').remove()">×</button>
+            <div class="modal-content" style="max-width: 700px;">
+                <div class="modal-header" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 24px; border-radius: 12px 12px 0 0;">
+                    <h3 class="modal-title" style="margin: 0; font-size: 24px; font-weight: 700;">${job.title}</h3>
+                    <button class="modal-close" onclick="this.closest('.modal').remove()" style="color: white; opacity: 0.9;">×</button>
                 </div>
-                <div class="modal-body">
-                    <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; margin-bottom: 24px; padding: 16px; background: #f8fafc; border-radius: 8px;">
-                        <div>
-                            <div style="color: #64748b; font-size: 14px; margin-bottom: 4px;">📍 Location</div>
-                            <div style="font-weight: 600;">${job.location}</div>
+                <div class="modal-body" style="padding: 32px;">
+                    <!-- Job Info Cards -->
+                    <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin-bottom: 32px;">
+                        <div style="background: linear-gradient(135deg, #667eea15 0%, #764ba215 100%); padding: 16px; border-radius: 12px; border: 1px solid #e2e8f0;">
+                            <div style="font-size: 24px; margin-bottom: 8px;">📍</div>
+                            <div style="color: #64748b; font-size: 12px; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 4px; font-weight: 600;">Location</div>
+                            <div style="color: #1e293b; font-weight: 600; font-size: 14px;">${job.location}</div>
                         </div>
-                        <div>
-                            <div style="color: #64748b; font-size: 14px; margin-bottom: 4px;">💼 Job Type</div>
-                            <div style="font-weight: 600;">${job.job_type}</div>
+                        <div style="background: linear-gradient(135deg, #667eea15 0%, #764ba215 100%); padding: 16px; border-radius: 12px; border: 1px solid #e2e8f0;">
+                            <div style="font-size: 24px; margin-bottom: 8px;">💼</div>
+                            <div style="color: #64748b; font-size: 12px; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 4px; font-weight: 600;">Job Type</div>
+                            <div style="color: #1e293b; font-weight: 600; font-size: 14px;">${job.job_type}</div>
                         </div>
-                        <div>
-                            <div style="color: #64748b; font-size: 14px; margin-bottom: 4px;">🏢 Department</div>
-                            <div style="font-weight: 600;">${job.department || 'Not specified'}</div>
+                        <div style="background: linear-gradient(135deg, #667eea15 0%, #764ba215 100%); padding: 16px; border-radius: 12px; border: 1px solid #e2e8f0;">
+                            <div style="font-size: 24px; margin-bottom: 8px;">🏢</div>
+                            <div style="color: #64748b; font-size: 12px; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 4px; font-weight: 600;">Department</div>
+                            <div style="color: #1e293b; font-weight: 600; font-size: 14px;">${job.department || 'Not specified'}</div>
                         </div>
                     </div>
                     
-                    <div style="margin-bottom: 24px;">
-                        <h4 style="color: #1e293b; margin-bottom: 12px; font-size: 16px;">📋 Description</h4>
-                        <p style="color: #475569; line-height: 1.8; white-space: pre-line;">${(job.description || '').replace(/Requirements?:\s*/i, '').trim()}</p>
+                    <!-- Description Section -->
+                    <div style="margin-bottom: 32px; padding: 20px; background: #f8fafc; border-radius: 12px; border-left: 4px solid #667eea;">
+                        <div style="color: #1e293b; font-weight: 700; font-size: 16px; margin-bottom: 12px; display: flex; align-items: center; gap: 8px;">
+                            <span style="font-size: 20px;">📋</span>
+                            <span>Description</span>
+                        </div>
+                        <p style="color: #475569; line-height: 1.8; margin: 0; white-space: pre-line;">${(job.description || '').replace(/Requirements?:\s*/i, '').trim()}</p>
                     </div>
                     
-                    <div style="margin-bottom: 24px;">
-                        <h4 style="color: #1e293b; margin-bottom: 12px; font-size: 16px;">✅ Requirements</h4>
-                        <ul style="line-height: 2; color: #475569; padding-left: 20px;">
+                    <!-- Requirements Section -->
+                    <div style="margin-bottom: 32px; padding: 20px; background: #f0fdf4; border-radius: 12px; border-left: 4px solid #10b981;">
+                        <div style="color: #1e293b; font-weight: 700; font-size: 16px; margin-bottom: 16px; display: flex; align-items: center; gap: 8px;">
+                            <span style="font-size: 20px;">✅</span>
+                            <span>Requirements</span>
+                        </div>
+                        <ul style="margin: 0; padding-left: 24px; color: #475569; line-height: 2;">
                             ${Array.isArray(job.requirements) 
-                                ? job.requirements.map(r => `<li style="margin-bottom: 8px;">${r}</li>`).join('') 
-                                : (job.requirements || '').split(/\n|\.(?=\s[A-Z])/).filter(r => r.trim() && !r.match(/^Requirements?:?\s*$/i)).map(r => `<li style="margin-bottom: 8px;">${r.trim()}</li>`).join('')}
+                                ? job.requirements.map(r => `<li style="margin-bottom: 10px;">${r}</li>`).join('') 
+                                : (job.requirements || '').split(/\n|\.(?=\s[A-Z])/).filter(r => r.trim() && !r.match(/^Requirements?:?\s*$/i)).map(r => `<li style="margin-bottom: 10px;">${r.trim()}</li>`).join('')}
                         </ul>
                     </div>
                     
-                    <div>
-                        <h4 style="color: #1e293b; margin-bottom: 12px; font-size: 16px;">🎯 Required Skills</h4>
-                        <div class="job-tags">
-                            ${(job.required_skills || []).map(s => `<span class="tag">${s}</span>`).join('')}
+                    <!-- Required Skills Section -->
+                    <div style="padding: 20px; background: #fef3f2; border-radius: 12px; border-left: 4px solid #f97316;">
+                        <div style="color: #1e293b; font-weight: 700; font-size: 16px; margin-bottom: 16px; display: flex; align-items: center; gap: 8px;">
+                            <span style="font-size: 20px;">🎯</span>
+                            <span>Required Skills</span>
+                        </div>
+                        <div class="job-tags" style="display: flex; flex-wrap: wrap; gap: 8px;">
+                            ${(job.required_skills || []).map(s => `<span class="tag" style="background: white; border: 2px solid #f97316; color: #ea580c; font-weight: 600; padding: 8px 16px; border-radius: 8px;">${s}</span>`).join('')}
                         </div>
                     </div>
                 </div>
-                <div class="modal-footer">
-                    <button class="btn btn-secondary" onclick="this.closest('.modal').remove()">Close</button>
-                    <button class="btn btn-primary" onclick="this.closest('.modal').remove(); applyToJob('${job._id}')">Apply Now</button>
+                <div class="modal-footer" style="background: #f8fafc; padding: 20px 32px; border-radius: 0 0 12px 12px; display: flex; gap: 12px; justify-content: flex-end;">
+                    <button class="btn btn-secondary" onclick="this.closest('.modal').remove()" style="padding: 12px 24px; border-radius: 8px; font-weight: 600;">Close</button>
+                    <button class="btn btn-primary" onclick="this.closest('.modal').remove(); applyToJob('${job._id}')" style="padding: 12px 32px; border-radius: 8px; font-weight: 600; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border: none; box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);">Apply Now</button>
                 </div>
             </div>
         `;
