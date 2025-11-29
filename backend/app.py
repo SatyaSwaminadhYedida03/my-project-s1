@@ -17,6 +17,7 @@ from backend.models.database import Database
 from backend.routes import auth_routes, job_routes, candidate_routes, company_routes, email_preferences_routes, assessment_routes, audit_routes, dsr_routes
 from backend.utils.license_validator import check_deployment_authorization, require_valid_license
 from backend.utils.env_config import env_config, print_startup_banner
+from backend.utils.monitoring import initialize_monitoring
 from backend.workers.job_processor import start_workers, stop_workers
 import atexit
 import logging
@@ -88,6 +89,9 @@ app.register_blueprint(audit_routes.bp, url_prefix='/api/audit')
 app.register_blueprint(dsr_routes.bp, url_prefix='/api/dsr')
 # Disabled for Render free tier (require ML libraries):
 # app.register_blueprint(dashboard_routes.bp, url_prefix='/api/dashboard')
+
+# Initialize monitoring & observability
+initialize_monitoring(app)
 
 # Start background workers if enabled
 if env_config.enable_background_workers and env_config.enable_redis:
