@@ -10,6 +10,8 @@ pymongo==4.6.1
 
 # Redis for queuing and caching
 redis==5.0.1
+celery==5.3.4
+flower==2.0.1  # Celery monitoring
 
 # Security
 cryptography==41.0.7
