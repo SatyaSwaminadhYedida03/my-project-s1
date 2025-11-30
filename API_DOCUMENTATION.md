@@ -416,3 +416,165 @@ curl https://my-project-smart-hiring.onrender.com/api/jobs/list \
 
 **Last Updated**: January 2025  
 **Version**: 2.0.0
+
+---
+
+## 🔧 Developer Tools
+
+### Swagger UI (Interactive Documentation)
+Visit `/api/docs` for interactive API exploration:
+- Try endpoints directly from browser
+- View request/response schemas
+- See authentication requirements
+- Download OpenAPI specification
+
+### Postman Collection
+Import `Smart_Hiring_API.postman_collection.json` into Postman:
+1. Open Postman → **Import** → **Upload Files**
+2. Select the collection file from project root
+3. Update `baseUrl` variable if needed (defaults to production)
+4. Login via the "Login" request to auto-populate JWT token
+5. All subsequent requests will use the token automatically
+
+### Response Format Standard
+
+All API responses follow a standardized format:
+
+#### Success Response
+```json
+{
+  "success": true,
+  "data": { ... },
+  "message": "Optional success message"
+}
+```
+
+#### Error Response
+```json
+{
+  "success": false,
+  "error": "Error message",
+  "errors": {
+    "field": ["Validation error"]
+  }
+}
+```
+
+#### Paginated Response
+```json
+{
+  "success": true,
+  "data": [...],
+  "pagination": {
+    "page": 1,
+    "per_page": 20,
+    "total": 150,
+    "total_pages": 8,
+    "has_next": true,
+    "has_prev": false
+  }
+}
+```
+
+### HTTP Status Code Reference
+
+| Code | Meaning | When Used |
+|------|---------|-----------|
+| 200 | OK | Request successful |
+| 201 | Created | Resource created successfully |
+| 204 | No Content | Successful deletion |
+| 400 | Bad Request | Invalid request data |
+| 401 | Unauthorized | Authentication required |
+| 403 | Forbidden | Insufficient permissions |
+| 404 | Not Found | Resource not found |
+| 409 | Conflict | Resource already exists |
+| 422 | Unprocessable Entity | Validation failed |
+| 429 | Too Many Requests | Rate limit exceeded |
+| 500 | Internal Server Error | Server error |
+
+### Best Practices
+
+#### 1. Token Management
+```javascript
+// Store token securely
+localStorage.setItem('jwt_token', token);
+
+// Include in requests
+fetch('/api/jobs/list', {
+  headers: {
+    'Authorization': `Bearer ${localStorage.getItem('jwt_token')}`
+  }
+});
+```
+
+#### 2. Error Handling
+```javascript
+try {
+  const response = await fetch('/api/jobs/list');
+  const data = await response.json();
+  
+  if (!data.success) {
+    console.error(data.error);
+    return;
+  }
+  
+  // Process data
+} catch (error) {
+  console.error('Network error:', error);
+}
+```
+
+#### 3. Rate Limit Handling
+```javascript
+const retryAfter = response.headers.get('Retry-After');
+if (response.status === 429) {
+  setTimeout(() => retryRequest(), retryAfter * 1000);
+}
+```
+
+---
+
+## 🚀 Quick Start Examples
+
+### Python Example
+```python
+import requests
+
+# Login
+response = requests.post(
+    'https://my-project-smart-hiring.onrender.com/api/auth/login',
+    json={'email': 'user@example.com', 'password': 'password123'}
+)
+token = response.json()['token']
+
+# List jobs
+jobs = requests.get(
+    'https://my-project-smart-hiring.onrender.com/api/jobs/list',
+    headers={'Authorization': f'Bearer {token}'}
+).json()
+```
+
+### JavaScript Example
+```javascript
+// Login
+const login = await fetch('/api/auth/login', {
+  method: 'POST',
+  headers: { 'Content-Type': 'application/json' },
+  body: JSON.stringify({ email: 'user@example.com', password: 'password123' })
+});
+const { token } = await login.json();
+
+// List jobs
+const jobs = await fetch('/api/jobs/list', {
+  headers: { 'Authorization': `Bearer ${token}` }
+}).then(r => r.json());
+```
+
+---
+
+## 📚 Additional Resources
+
+- **OpenAPI Spec**: `/api/swagger.json`
+- **Support**: support@smarthiring.com
+- **Security Runbook**: See `SECURITY_RUNBOOK.md`
+- **Backup Guide**: See `BACKUP_GUIDE.md`

@@ -37,5 +37,10 @@ pandas==2.2.3
 pytest==7.4.3
 pytest-flask==1.3.0
 
+# API Documentation
+apispec==6.3.1
+apispec-webframeworks==1.0.0
+marshmallow==3.20.1
+
 # Optional: Virus scanning (requires ClamAV daemon)
 # pyclamd==0.4.0
