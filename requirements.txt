@@ -39,6 +39,9 @@ pandas==2.2.3
 scikit-learn==1.3.2
 numpy==1.24.3  # Required by scikit-learn
 
+# LinkedIn API Integration
+requests-oauthlib==1.3.1  # For LinkedIn OAuth
+
 # Testing
 pytest==7.4.3
 pytest-flask==1.3.0
