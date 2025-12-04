@@ -24,12 +24,26 @@ class EmailService:
         
     def send_email(self, to_email: str, subject: str, html_content: str, text_content: Optional[str] = None) -> bool:
         """Send an email with HTML and optional plain text content"""
+        print(f"\n{'='*60}")
+        print(f"📧 EMAIL SERVICE CALLED")
+        print(f"To: {to_email}")
+        print(f"Subject: {subject}")
+        print(f"Enabled: {self.enabled}")
+        print(f"SMTP Server: {self.smtp_server}:{self.smtp_port}")
+        print(f"SMTP User: {self.smtp_username}")
+        print(f"{'='*60}\n")
+        
         if not self.enabled:
-            print(f"📧 Email disabled. Would send to {to_email}: {subject}")
-            return True
+            print(f"⚠️  EMAIL DISABLED - Set EMAIL_ENABLED=true in .env to send emails")
+            print(f"📧 Would send to {to_email}: {subject}")
+            print(f"📝 Content preview: {text_content[:100] if text_content else 'No text content'}...")
+            return True  # Return True so application flow continues
             
-        if not self.smtp_username or not self.smtp_password:
-            print(f"⚠️ SMTP credentials not configured. Skipping email to {to_email}")
+        if not self.smtp_username or not self.smtp_password or 'your-' in self.smtp_username:
+            print(f"⚠️  SMTP CREDENTIALS NOT CONFIGURED")
+            print(f"📧 Cannot send email to {to_email}")
+            print(f"💡 Configure SMTP_USERNAME and SMTP_PASSWORD in .env file")
+            print(f"💡 For Gmail, use App Password: https://myaccount.google.com/apppasswords")
             return False
             
         try:
@@ -49,16 +63,23 @@ class EmailService:
             msg.attach(part2)
             
             # Send email
+            print(f"🚀 Attempting to send email via SMTP...")
             with smtplib.SMTP(self.smtp_server, self.smtp_port) as server:
+                server.set_debuglevel(1)  # Enable SMTP debug output
                 server.starttls()
+                print(f"🔐 Logging in to SMTP server...")
                 server.login(self.smtp_username, self.smtp_password)
+                print(f"📤 Sending message...")
                 server.send_message(msg)
                 
-            print(f"✅ Email sent successfully to {to_email}")
+            print(f"✅ EMAIL SENT SUCCESSFULLY to {to_email}")
             return True
             
         except Exception as e:
-            print(f"❌ Failed to send email to {to_email}: {str(e)}")
+            print(f"❌ FAILED TO SEND EMAIL to {to_email}")
+            print(f"❌ Error: {str(e)}")
+            import traceback
+            traceback.print_exc()
             return False
     
     def send_welcome_email(self, to_email: str, full_name: str, role: str) -> bool:

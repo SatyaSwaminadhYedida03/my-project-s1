@@ -53,11 +53,23 @@ def upload_resume():
         if not resume_text:
             return jsonify({'error': 'Could not extract text from resume'}), 400
         
+        print(f"\n{'='*60}")
+        print(f"📄 RESUME PROCESSING")
+        print(f"File: {file.filename}")
+        print(f"Size: {len(file_data)} bytes")
+        print(f"Text length: {len(resume_text)} characters")
+        print(f"Text preview: {resume_text[:200]}...")
+        print(f"{'='*60}\n")
+        
         # Anonymize resume
         anonymized_text = anonymize_text(resume_text)
         
         # Extract skills
+        print(f"🔍 Extracting skills from resume text...")
         skills = extract_skills(resume_text)
+        print(f"✅ Skills extracted: {len(skills)} skills found")
+        print(f"📋 Skills list: {skills[:10]}..." if len(skills) > 10 else f"📋 Skills list: {skills}")
+        print(f"{'='*60}\n")
         
         # Get experience data from request (optional)
         experience_data = request.form.get('experience', '[]')

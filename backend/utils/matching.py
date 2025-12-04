@@ -97,8 +97,10 @@ SKILLS_MASTER = [
 def extract_skills(text):
     """Extract skills from text using dictionary matching"""
     if not text:
+        print("⚠️ extract_skills: Empty text provided")
         return []
     
+    print(f"🔍 extract_skills: Processing text of length {len(text)}")
     txt = text.lower()
     found = []
     
@@ -107,7 +109,10 @@ def extract_skills(text):
         if re.search(r'\b' + re.escape(skill) + r'\b', txt):
             found.append(skill)
     
-    return list(set(found))  # Remove duplicates
+    unique_skills = list(set(found))  # Remove duplicates
+    print(f"✅ extract_skills: Found {len(unique_skills)} unique skills from {len(found)} total matches")
+    
+    return unique_skills
 
 def calculate_tfidf_similarity(job_text, resume_text):
     """Calculate TF-IDF cosine similarity between job and resume"""

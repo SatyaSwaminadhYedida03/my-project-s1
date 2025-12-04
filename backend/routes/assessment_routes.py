@@ -161,18 +161,33 @@ def get_quizzes():
         if role == 'company':
             query['created_by'] = user_id
         elif role == 'candidate':
-            # Candidates see quizzes for jobs they applied to
-            applications = list(db['applications'].find({'candidate_id': user_id}))
-            job_ids = [app['job_id'] for app in applications]
-            query['job_id'] = {'$in': job_ids}
+            # Candidates see ALL active quizzes (general + job-specific)
+            # This allows them to build their profile before applying
+            # Job-specific quizzes will be marked if they applied to that job
+            pass  # Show all active quizzes
         
         quizzes = list(db['quizzes'].find(query))
-        for quiz in quizzes:
-            quiz['_id'] = str(quiz['_id'])
-            quiz['created_at'] = quiz['created_at'].isoformat()
+        
+        # For candidates, add context about which quizzes are required for their applications
+        if role == 'candidate':
+            applications = list(db['applications'].find({'candidate_id': user_id}))
+            applied_job_ids = [app['job_id'] for app in applications]
+            
+            for quiz in quizzes:
+                quiz['_id'] = str(quiz['_id'])
+                quiz['created_at'] = quiz['created_at'].isoformat()
+                # Mark if this quiz is for a job they applied to
+                quiz['is_required'] = quiz.get('job_id') in applied_job_ids if quiz.get('job_id') else False
+        else:
+            for quiz in quizzes:
+                quiz['_id'] = str(quiz['_id'])
+                quiz['created_at'] = quiz['created_at'].isoformat()
         
         return jsonify({'quizzes': quizzes, 'total': len(quizzes)}), 200
     except Exception as e:
+        print(f"Error in get_quizzes: {str(e)}")
+        import traceback
+        traceback.print_exc()
         return jsonify({'error': str(e)}), 500
 
 # ==================== QUIZ TAKING ====================
