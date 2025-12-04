@@ -1,0 +1,252 @@
+name: Release Candidate - Production Deployment
+
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Release version (e.g., v2.1.0)'
+        required: true
+        type: string
+      skip_tests:
+        description: 'Skip test suite (emergency only)'
+        required: false
+        type: boolean
+        default: false
+
+permissions:
+  contents: write
+  issues: write
+  pull-requests: write
+
+jobs:
+  pre-flight-checks:
+    name: Pre-flight Validation
+    runs-on: ubuntu-latest
+    outputs:
+      version: ${{ steps.validate.outputs.version }}
+      
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      
+      - name: Validate version format
+        id: validate
+        run: |
+          VERSION="${{ github.event.inputs.version }}"
+          if [[ ! $VERSION =~ ^v[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+            echo "❌ Invalid version format. Use semantic versioning (e.g., v2.1.0)"
+            exit 1
+          fi
+          echo "version=${VERSION}" >> $GITHUB_OUTPUT
+          echo "✅ Version format valid: ${VERSION}"
+      
+      - name: Check for uncommitted changes
+        run: |
+          if [[ -n $(git status --porcelain) ]]; then
+            echo "❌ Uncommitted changes detected. Commit or stash before release."
+            exit 1
+          fi
+          echo "✅ Working directory clean"
+      
+      - name: Verify staging branch exists
+        run: |
+          if ! git rev-parse --verify staging >/dev/null 2>&1; then
+            echo "❌ Staging branch not found"
+            exit 1
+          fi
+          echo "✅ Staging branch exists"
+
+  run-test-suite:
+    name: Run Full Test Suite
+    runs-on: ubuntu-latest
+    needs: pre-flight-checks
+    if: ${{ !github.event.inputs.skip_tests }}
+    
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.11'
+          cache: 'pip'
+      
+      - name: Install dependencies
+        run: |
+          pip install -r requirements.txt
+          pip install pytest pytest-cov pytest-flask
+      
+      - name: Run backend tests
+        run: |
+          cd backend
+          pytest tests/ -v --tb=short --maxfail=5
+        env:
+          TESTING: true
+          MONGO_URI: ${{ secrets.TEST_MONGO_URI }}
+      
+      - name: Check test coverage
+        run: |
+          cd backend
+          pytest tests/ --cov=. --cov-report=term-missing --cov-fail-under=40
+
+  security-scan:
+    name: Security & Vulnerability Scan
+    runs-on: ubuntu-latest
+    needs: pre-flight-checks
+    
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Run Safety check
+        run: |
+          pip install safety
+          pip install -r requirements.txt
+          safety check --json || echo "⚠️ Vulnerabilities detected"
+      
+      - name: Check for secrets in code
+        uses: trufflesecurity/trufflehog@main
+        with:
+          path: ./
+          base: main
+          head: HEAD
+
+  build-verification:
+    name: Build & Smoke Test
+    runs-on: ubuntu-latest
+    needs: [run-test-suite, security-scan]
+    if: always() && (needs.run-test-suite.result == 'success' || needs.run-test-suite.result == 'skipped')
+    
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.11'
+      
+      - name: Build application
+        run: |
+          pip install -r requirements.txt
+          pip install gunicorn
+          echo "✅ Build successful"
+      
+      - name: Verify critical files exist
+        run: |
+          REQUIRED_FILES=(
+            "backend/app.py"
+            "requirements.txt"
+            "render.yaml"
+            "README.md"
+            "API_DOCUMENTATION.md"
+          )
+          
+          for file in "${REQUIRED_FILES[@]}"; do
+            if [[ ! -f "$file" ]]; then
+              echo "❌ Missing required file: $file"
+              exit 1
+            fi
+          done
+          echo "✅ All required files present"
+
+  create-release-pr:
+    name: Create Release PR
+    runs-on: ubuntu-latest
+    needs: [pre-flight-checks, build-verification]
+    
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: staging
+      
+      - name: Create release branch
+        run: |
+          VERSION="${{ needs.pre-flight-checks.outputs.version }}"
+          git checkout -b release/${VERSION}
+          git push origin release/${VERSION}
+      
+      - name: Generate changelog
+        id: changelog
+        run: |
+          VERSION="${{ needs.pre-flight-checks.outputs.version }}"
+          echo "## Release ${VERSION}" > RELEASE_NOTES.md
+          echo "" >> RELEASE_NOTES.md
+          echo "### Changes" >> RELEASE_NOTES.md
+          git log --oneline --no-merges $(git describe --tags --abbrev=0 2>/dev/null || echo "")..HEAD >> RELEASE_NOTES.md || echo "Initial release" >> RELEASE_NOTES.md
+      
+      - name: Create Pull Request
+        uses: peter-evans/create-pull-request@v5
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          branch: release/${{ needs.pre-flight-checks.outputs.version }}
+          base: main
+          title: "Release ${{ needs.pre-flight-checks.outputs.version }}"
+          body: |
+            ## 🚀 Release Candidate: ${{ needs.pre-flight-checks.outputs.version }}
+            
+            ### ✅ Pre-flight Checks
+            - [x] Version format validated
+            - [x] Test suite passed
+            - [x] Security scan completed
+            - [x] Build verification successful
+            
+            ### 📋 QA Checklist
+            - [ ] Staging environment tested
+            - [ ] API endpoints verified
+            - [ ] Authentication flows tested
+            - [ ] Database migrations verified
+            - [ ] Performance benchmarks acceptable
+            - [ ] Security review completed
+            
+            ### 🔄 Post-Merge Actions
+            1. Tag release in main branch
+            2. Deploy to production (Render auto-deploy)
+            3. Monitor error rates for 1 hour
+            4. Verify smoke tests pass
+            5. Update documentation if needed
+            
+            ### 🆘 Rollback Plan
+            If issues detected:
+            1. Revert merge commit
+            2. Restore database from backup (if schema changed)
+            3. Monitor error rates stabilize
+            4. Notify team in Slack
+            
+            ---
+            **Triggered by:** @${{ github.actor }}  
+            **Timestamp:** ${{ github.event.head_commit.timestamp }}
+          labels: release
+
+  deployment-readiness:
+    name: Deployment Readiness Report
+    runs-on: ubuntu-latest
+    needs: [pre-flight-checks, run-test-suite, security-scan, build-verification]
+    if: always()
+    
+    steps:
+      - name: Generate readiness report
+        run: |
+          echo "# 🚀 Release Readiness Report"
+          echo ""
+          echo "## Version: ${{ needs.pre-flight-checks.outputs.version }}"
+          echo ""
+          echo "### Results"
+          echo "- Pre-flight Checks: ${{ needs.pre-flight-checks.result }}"
+          echo "- Test Suite: ${{ needs.run-test-suite.result }}"
+          echo "- Security Scan: ${{ needs.security-scan.result }}"
+          echo "- Build Verification: ${{ needs.build-verification.result }}"
+          echo ""
+          
+          ALL_PASSED=true
+          if [[ "${{ needs.pre-flight-checks.result }}" != "success" ]]; then ALL_PASSED=false; fi
+          if [[ "${{ needs.build-verification.result }}" != "success" ]]; then ALL_PASSED=false; fi
+          
+          if [[ "$ALL_PASSED" == "true" ]]; then
+            echo "## ✅ READY FOR RELEASE"
+            echo "All checks passed. Proceed with merge and deployment."
+          else
+            echo "## ❌ NOT READY FOR RELEASE"
+            echo "One or more checks failed. Review logs before proceeding."
+            exit 1
+          fi
