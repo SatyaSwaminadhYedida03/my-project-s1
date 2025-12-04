@@ -6,6 +6,7 @@
     <title>Quiz Management - Smart Hiring</title>
     <link rel="stylesheet" href="styles.css">
     <link rel="stylesheet" href="ui-enhancements.css">
+    <link rel="stylesheet" href="a11y.css">
     <style>
         .quiz-container { max-width: 1200px; margin: 40px auto; padding: 32px; }
         .quiz-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 32px; }
@@ -31,6 +32,7 @@
     </style>
 </head>
 <body>
+    <a href="#main-content" class="skip-link">Skip to main content</a>
     <div class="navbar">
         <div class="navbar-brand">🎯 Smart Hiring</div>
         <div class="navbar-menu">
@@ -41,7 +43,7 @@
         </div>
     </div>
 
-    <div class="quiz-container">
+    <div class="quiz-container" role="main" id="main-content">
         <div class="quiz-header">
             <h1>📋 Quiz Management</h1>
             <button class="btn-create" onclick="showCreateModal()">+ Create Quiz</button>
@@ -227,6 +229,7 @@
 
         loadQuestions().then(loadQuizzes);
     </script>
+    <script src="a11y.js"></script>
     <script src="ui-utils.js"></script>
 </body>
 </html>

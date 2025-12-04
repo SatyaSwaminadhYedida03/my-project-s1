@@ -6,6 +6,7 @@
     <title>Email Preferences - Smart Hiring</title>
     <link rel="stylesheet" href="styles.css">
     <link rel="stylesheet" href="ui-enhancements.css">
+    <link rel="stylesheet" href="a11y.css">
     <style>
         .email-preferences-container {
             max-width: 800px;
@@ -236,6 +237,7 @@
     </style>
 </head>
 <body>
+    <a href="#main-content" class="skip-link">Skip to main content</a>
     <div class="navbar">
         <div class="navbar-brand">🎯 Smart Hiring</div>
         <div class="navbar-menu">
@@ -246,7 +248,7 @@
         </div>
     </div>
 
-    <div class="email-preferences-container">
+    <div class="email-preferences-container" role="main" id="main-content">
         <div class="preferences-header">
             <h1>📧 Email Preferences</h1>
             <p>Manage how and when you receive email notifications from Smart Hiring System</p>
@@ -452,6 +454,7 @@
             window.location.href = 'login.html';
         }
     </script>
+    <script src="a11y.js"></script>
     <script src="ui-utils.js"></script>
 </body>
 </html>

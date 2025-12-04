@@ -10,10 +10,13 @@
     <link rel="stylesheet" href="ui-enhancements.css">
     <link rel="stylesheet" href="analytics-dashboard.css">
     <link rel="stylesheet" href="enterprise-ui.css">
+    <link rel="stylesheet" href="a11y.css">
 </head>
 <body>
+    <a href="#main-content" class="skip-link">Skip to main content</a>
     <div id="notification-container" class="notification-container"></div>
-    <div id="app"></div>
+    <div id="app" role="main" id="main-content"></div>
+    <script src="a11y.js"></script>
     <script src="ui-utils.js"></script>
     <script src="ui-enhancements.js"></script>
     <script src="security-utils.js"></script>
