@@ -281,8 +281,9 @@ def forgot_password():
         
         # Send email with reset link
         from backend.utils.email_service import email_service
+        email_sent = False
         try:
-            email_service.send_password_reset_email(
+            email_sent = email_service.send_password_reset_email(
                 to_email=email,
                 reset_link=reset_link,
                 user_name=user.get('name', email)
@@ -290,13 +291,23 @@ def forgot_password():
         except Exception as email_error:
             logger.warning(f"Failed to send password reset email: {email_error}")
         
-        # In development, log the token (remove in production)
-        if current_app.config.get('DEBUG', False):
-            print(f"[DEV ONLY] Password reset token for {email}: {reset_token}")
-        
-        return jsonify({
+        # Build response with development info if emails are disabled
+        response_data = {
             'message': 'If an account exists with this email, password reset instructions have been sent'
-        }), 200
+        }
+        
+        # In development mode or when emails are disabled, include the reset token for testing
+        email_enabled = os.getenv('EMAIL_ENABLED', 'false').lower() == 'true'
+        if not email_enabled or current_app.config.get('DEBUG', False):
+            print(f"[DEV MODE] Password reset token for {email}: {reset_token}")
+            print(f"[DEV MODE] Reset link: {reset_link}")
+            response_data['dev_mode'] = True
+            response_data['reset_token'] = reset_token
+            response_data['reset_link'] = reset_link
+            response_data['email_sent'] = email_sent
+            response_data['note'] = 'Email notifications are currently disabled. Use the reset token and link below for testing.'
+        
+        return jsonify(response_data), 200
         
     except Exception as e:
         return jsonify({'error': str(e)}), 500
