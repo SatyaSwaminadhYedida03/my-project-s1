@@ -337,8 +337,12 @@ async function handleLogin(e) {
         // Use the actual role from the database, not the selected portal
         const actualRole = data.user.role;
         
+        // Normalize roles: 'recruiter' and 'company' are interchangeable
+        const normalizedActualRole = actualRole === 'recruiter' ? 'company' : actualRole;
+        const normalizedCurrentRole = currentRole === 'recruiter' ? 'company' : currentRole;
+        
         // Validate role matches selected portal (optional strict check)
-        if (currentRole !== 'admin' && actualRole !== currentRole && actualRole !== 'admin') {
+        if (normalizedCurrentRole !== 'admin' && normalizedActualRole !== normalizedCurrentRole && normalizedActualRole !== 'admin') {
             throw new Error(`This account is registered as ${actualRole}. Please use the ${actualRole} portal.`);
         }
         
