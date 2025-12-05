@@ -242,7 +242,7 @@ def get_ranked_candidates(job_id):
             user_id = current_user.get('user_id')
             role = current_user.get('role')
         
-        if role != 'company':
+        if role not in ['company', 'recruiter']:
             return jsonify({'error': 'Only recruiters can view ranked candidates'}), 403
         
         db = get_db()
