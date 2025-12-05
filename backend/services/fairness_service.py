@@ -1,18 +1,28 @@
 """
 Fairness & Bias Prevention Service
-Simplified version for Render deployment (ML libraries removed for size constraints)
+Enhanced with custom lightweight fairness engine for Render deployment compatibility
 """
 
 import pandas as pd
+import numpy as np
 from collections import defaultdict
+from typing import Dict, List, Optional
 
-try:
-    from aif360.datasets import BinaryLabelDataset
-    from aif360.metrics import BinaryLabelDatasetMetric, ClassificationMetric
-    AIF360_AVAILABLE = True
-except ImportError:
-    AIF360_AVAILABLE = False
-    print("Warning: AIF360 not available. Install with: pip install aif360")
+# Import our custom lightweight fairness engine
+from backend.services.fairness_engine import (
+    analyze_hiring_fairness_comprehensive,
+    calculate_fairness_score,
+    get_fairness_badge as get_badge_info,
+    calculate_demographic_parity,
+    calculate_equal_opportunity,
+    calculate_disparate_impact,
+    FairnessMetrics,
+    BiasDetector
+)
+
+# AIF360 is NOT used anymore - all fairness metrics calculated in-house
+AIF360_AVAILABLE = False
+print("✅ Using custom lightweight fairness engine (AIF360 not required)")
 
 def calculate_demographic_parity(selection_rates):
     """
@@ -93,6 +103,8 @@ def analyze_hiring_fairness(applications_df, protected_attribute='gender', favor
     """
     Comprehensive fairness analysis of hiring decisions
     
+    Now uses custom lightweight fairness engine instead of AIF360
+    
     Args:
         applications_df: DataFrame with columns [protected_attribute, decision, ground_truth]
         protected_attribute: Column name for protected attribute (e.g., 'gender', 'race')
@@ -107,88 +119,35 @@ def analyze_hiring_fairness(applications_df, protected_attribute='gender', favor
             'bias_detected': False
         }
     
+    # Use our comprehensive fairness engine
+    analysis = analyze_hiring_fairness_comprehensive(
+        applications=applications_df,
+        protected_attribute=protected_attribute,
+        decision_column='decision',
+        ground_truth_column='ground_truth' if 'ground_truth' in applications_df.columns else None,
+        favorable_label=favorable_label
+    )
+    
+    if 'error' in analysis:
+        return analysis
+    
+    # Format results for backward compatibility
     results = {
-        'total_applications': len(applications_df),
+        'total_applications': analysis['summary']['total_applications'],
         'demographic_breakdown': {},
         'selection_rates': {},
-        'fairness_metrics': {},
-        'bias_detected': False,
-        'bias_groups': [],
-        'recommendations': []
+        'fairness_metrics': analysis['fairness_metrics'],
+        'bias_detected': analysis['summary']['bias_detected'],
+        'bias_groups': analysis['bias_analysis']['violations'],
+        'recommendations': analysis['recommendations'],
+        'fairness_score': analysis['summary']['fairness_score'],
+        'group_statistics': analysis['group_statistics']
     }
     
-    # Group statistics
-    groups = applications_df[protected_attribute].unique()
-    
-    for group in groups:
-        group_data = applications_df[applications_df[protected_attribute] == group]
-        total = len(group_data)
-        selected = len(group_data[group_data['decision'] == favorable_label])
-        selection_rate = selected / total if total > 0 else 0
-        
-        results['demographic_breakdown'][str(group)] = total
-        results['selection_rates'][str(group)] = round(selection_rate, 4)
-    
-    # Calculate fairness metrics
-    demographic_parity = calculate_demographic_parity(results['selection_rates'])
-    disparate_impact = calculate_disparate_impact(results['selection_rates'])
-    
-    results['fairness_metrics']['demographic_parity_difference'] = demographic_parity
-    results['fairness_metrics']['disparate_impact_ratios'] = disparate_impact
-    
-    # Check for bias
-    PARITY_THRESHOLD = 0.1  # 10% difference threshold
-    DISPARATE_IMPACT_THRESHOLD = 0.8  # 80% rule
-    
-    if demographic_parity > PARITY_THRESHOLD:
-        results['bias_detected'] = True
-        results['bias_groups'].append({
-            'type': 'demographic_parity',
-            'severity': 'high' if demographic_parity > 0.2 else 'medium',
-            'difference': demographic_parity
-        })
-        results['recommendations'].append(
-            f"Demographic parity violation detected ({demographic_parity:.2%} difference). "
-            f"Review selection criteria to ensure equal treatment across groups."
-        )
-    
-    # Check disparate impact
-    for comparison, ratio in disparate_impact.items():
-        if ratio < DISPARATE_IMPACT_THRESHOLD:
-            results['bias_detected'] = True
-            results['bias_groups'].append({
-                'type': 'disparate_impact',
-                'comparison': comparison,
-                'ratio': ratio,
-                'severity': 'high' if ratio < 0.6 else 'medium'
-            })
-            results['recommendations'].append(
-                f"Disparate impact detected in {comparison} (ratio: {ratio:.2f}). "
-                f"This violates the 80% rule and may indicate discrimination."
-            )
-    
-    # Calculate equal opportunity if ground truth is available
-    if 'ground_truth' in applications_df.columns:
-        tpr_by_group = {}
-        for group in groups:
-            group_data = applications_df[applications_df[protected_attribute] == group]
-            positives = group_data[group_data['ground_truth'] == favorable_label]
-            
-            if len(positives) > 0:
-                true_positives = len(positives[positives['decision'] == favorable_label])
-                tpr = true_positives / len(positives)
-                tpr_by_group[str(group)] = tpr
-        
-        if tpr_by_group:
-            equal_opp = calculate_equal_opportunity(tpr_by_group)
-            results['fairness_metrics']['equal_opportunity_difference'] = equal_opp
-            
-            if equal_opp > PARITY_THRESHOLD:
-                results['bias_detected'] = True
-                results['recommendations'].append(
-                    f"Equal opportunity violation detected ({equal_opp:.2%} difference). "
-                    f"Qualified candidates from different groups have unequal chances."
-                )
+    # Extract demographic breakdown and selection rates
+    for group, stats in analysis['group_statistics'].items():
+        results['demographic_breakdown'][group] = stats['count']
+        results['selection_rates'][group] = stats['selection_rate']
     
     return results
 
@@ -246,39 +205,12 @@ def get_fairness_badge(fairness_score):
     """
     Get fairness badge based on metrics
     
+    Now uses custom fairness engine
+    
     Args:
         fairness_score: Score from 0-100 (100 = perfectly fair)
     
     Returns:
         dict: Badge information
     """
-    if fairness_score >= 90:
-        return {
-            'badge': 'Excellent Fairness',
-            'color': 'green',
-            'level': 'A+'
-        }
-    elif fairness_score >= 80:
-        return {
-            'badge': 'Good Fairness',
-            'color': 'lightgreen',
-            'level': 'A'
-        }
-    elif fairness_score >= 70:
-        return {
-            'badge': 'Acceptable Fairness',
-            'color': 'yellow',
-            'level': 'B'
-        }
-    elif fairness_score >= 60:
-        return {
-            'badge': 'Fair Concerns',
-            'color': 'orange',
-            'level': 'C'
-        }
-    else:
-        return {
-            'badge': 'Serious Bias Issues',
-            'color': 'red',
-            'level': 'F'
-        }
+    return get_badge_info(fairness_score)
