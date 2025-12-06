@@ -1,6 +1,7 @@
 """
 AIF360 Installation Verification Script
 Final Year Project - Smart Hiring System
+Windows Compatible Version (No Unicode)
 """
 
 import sys
@@ -18,9 +19,9 @@ def test_aif360_installation():
     print("[1/6] Testing basic AIF360 import...")
     try:
         import aif360
-        print(f"    ✅ SUCCESS: AIF360 version {aif360.__version__}")
+        print(f"    [OK] SUCCESS: AIF360 version {aif360.__version__}")
     except ImportError as e:
-        print(f"    ❌ FAILED: {e}")
+        print(f"    [FAIL] {e}")
         print("\n    FIX: pip install aif360==0.6.1")
         return False
     
@@ -28,11 +29,11 @@ def test_aif360_installation():
     print("\n[2/6] Testing NumPy compatibility...")
     try:
         import numpy as np
-        print(f"    ✅ SUCCESS: NumPy version {np.__version__}")
+        print(f"    [OK] SUCCESS: NumPy version {np.__version__}")
         if not np.__version__.startswith('1.26'):
-            print(f"    ⚠️  WARNING: Expected NumPy 1.26.x, got {np.__version__}")
+            print(f"    [WARN] Expected NumPy 1.26.x, got {np.__version__}")
     except Exception as e:
-        print(f"    ❌ FAILED: {e}")
+        print(f"    [FAIL] {e}")
         return False
     
     # Test 3: Dataset Module
@@ -105,8 +106,8 @@ def test_aif360_installation():
         pred_dataset = dataset.copy(deepcopy=True)
         
         clf_metric = ClassificationMetric(
-            dataset_true=dataset,
-            dataset_pred=pred_dataset,
+            dataset,
+            pred_dataset,
             privileged_groups=[{'gender': 1}],
             unprivileged_groups=[{'gender': 0}]
         )
@@ -114,12 +115,12 @@ def test_aif360_installation():
         eo_diff = clf_metric.equal_opportunity_difference()
         ao_diff = clf_metric.average_odds_difference()
         
-        print(f"    ✅ SUCCESS: Calculated classification metrics")
+        print(f"    [OK] SUCCESS: Calculated classification metrics")
         print(f"       - Equal Opportunity Difference: {eo_diff:.3f}")
         print(f"       - Average Odds Difference: {ao_diff:.3f}")
         
     except Exception as e:
-        print(f"    ❌ FAILED: {e}")
+        print(f"    [FAIL] {e}")
         traceback.print_exc()
         return False
     
