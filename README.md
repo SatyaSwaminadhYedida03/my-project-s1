@@ -12,7 +12,8 @@ A comprehensive, production-ready full-stack web application for managing job po
 ![GDPR](https://img.shields.io/badge/GDPR-Compliant-success)
 ![Live](https://img.shields.io/badge/Status-Production-success)
 
-**🌐 Live Demo**: https://my-project-smart-hiring.onrender.com
+**🌐 Live Demo (Railway)**: https://my-project-s1-production-fe5f.up.railway.app  
+**🌐 Previous Demo (Render)**: https://my-project-smart-hiring.onrender.com *(may be inactive)*
 
 ---
 
