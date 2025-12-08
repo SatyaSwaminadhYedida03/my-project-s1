@@ -9,11 +9,14 @@ FROM python:3.11-slim as builder
 # Set working directory
 WORKDIR /app
 
-# Install system dependencies
+# Install system dependencies including SSL/TLS support
 RUN apt-get update && apt-get install -y --no-install-recommends \
     gcc \
     g++ \
-    && rm -rf /var/lib/apt/lists/*
+    ca-certificates \
+    libssl-dev \
+    && rm -rf /var/lib/apt/lists/* \
+    && update-ca-certificates
 
 # Copy requirements
 COPY requirements.txt .
@@ -23,6 +26,13 @@ RUN pip install --no-cache-dir --user -r requirements.txt
 
 # Final stage
 FROM python:3.11-slim
+
+# Install CA certificates for SSL/TLS
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    ca-certificates \
+    libssl-dev \
+    && rm -rf /var/lib/apt/lists/* \
+    && update-ca-certificates
 
 # Set working directory
 WORKDIR /app
